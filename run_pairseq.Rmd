@@ -1,0 +1,297 @@
+---
+title: "PairSeq Pipeline"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Full PairSeq Workflow
+
+* In Rmd format purely for development purposes
+* Once optimized, all code will be packaged into functions
+
+```{r}
+library(data.table)
+library(stringr)
+# libraries from PairSeq functions
+library(tibble)
+library(seqinr)
+library(dplyr)
+library(fmsb)  # for percentiles
+
+data_dir     <- "~/Work/Rprojects/PairSeq_Development/"
+pairseq_func <- "~/Work/Rprojects/PairSeq_Development/PairSeq/R/"
+func_list    <- list.files(pairseq_func)
+func_list    <- paste(pairseq_func,func_list,sep = "")
+
+setwd(data_dir)           # Set working directory
+sapply(func_list,source)  # Source all PairSeq functions
+```
+
+
+# 1. Load peptide map and meebo data
+
+### a. Meebo/peptide table results
+* Dementia (),Healthy
+```{r}
+meebo_data <- read.csv("FTD_Full_Phage_Run_w_controls.csv",stringsAsFactors = F)
+peptide_gene_map <- read.csv("peptide_gene_mapping.csv",stringsAsFactors = F)
+
+# List of peptide IDs used for setting RPK threshold
+background_peptides <- read.table("background_peptides.txt",stringsAsFactors = F)
+background_peptides <- background_peptides$V1
+
+#source("R_Code/PairSeq_parse.r")
+```
+
+### b. sample metadata
+```{r}
+ftd_sample_names_df <- read.csv("FTD_clinical_sample_names.csv",stringsAsFactors = F)
+disease_names <- names(ftd_sample_names_df)
+disease_names <- disease_names[2:length(disease_names)]
+orig_names    <- as.character(ftd_sample_names_df[1,])
+orig_names    <- orig_names[2:length(orig_names)]
+
+sample_conv_list <- list()
+for(i in 1:length(orig_names)){
+  sample <- orig_names[i]
+  sample_conv <- disease_names[i]
+  
+  sample_conv_list[[sample]] <- sample_conv
+}
+
+```
+
+
+### c. Convert sample names so it has Disease category
+```{r}
+current_cols <- names(meebo_data)
+
+for (i in 2:length(current_cols)){
+  sample_current <- current_cols[i]
+  if(grepl("^X",sample_current)){
+    sample_current <- substr(sample_current,2,nchar(sample_current))
+  }
+  
+  sample_conv <- ""
+  if (!grepl("BEADS_|GPHN_|GFAP_",sample_current)){
+    sample_conv    <- sample_conv_list[[sample_current]]
+  } else{
+    sample_conv <- sample_current
+  }
+  
+  current_cols[i] <- sample_conv
+}
+
+names(meebo_data) <- current_cols
+```
+
+# 2. Merge both data sets (by peptide column)
+```{r}
+colnames(peptide_gene_map)[1] <- "peptide"
+df <- merge(meebo_data, peptide_gene_map, by = "peptide")
+```
+
+# 3. Create unique identifier column
+```{r}
+df$peptide_id <- paste(df$gene, df$index,sep = "_")
+```
+
+
+# 4. Clinical sample table (establish different comparison groups and Bead controls)
+* Establish vector of control and disease columns
+* Bead controls = GFAP columns
+
+* Ref control = NC and BEAD (negative controls, background)
+* positive controls = GFAP, GPHN
+* Disease = all disease samples
+
+```{r}
+column_names    <- names(df)
+bead_controls   <- column_names[grep("GFAP|GPHN",column_names)]
+gfap_controls   <- column_names[grep("GFAP",column_names)]
+ref_controls    <- column_names[grep("NC_|BEADS",column_names)]
+disease_samples <- column_names[! column_names %in% c("peptide_id",names(peptide_gene_map), bead_controls,ref_controls)]
+
+```
+
+
+# 5. Positive Control Percentile file of peptides
+* PUT all of this code into the full parse function. This 
+* Calculate percentile of lowest abuntant positive control (GFAP)
+* use this percentile to filter full meebo data frame to get rid of low expression peptides
+* To start use 15 select GFAP peptides identified
+
+UPDATE:
+* There are 4 GFAP samples, take the lowest abundace peptides of the average of these samples and set the percentile of this to be the threshold for the entire dataset
+* Alternatively set a hard threshold of 2 RPK
+```{r}
+# Establish Percentile threshold based on GFAP samples
+df_background     <- df[,c("peptide_id","peptide","gene",gfap_controls)]
+
+all_min_gfap_pct <- c()
+for(sample in gfap_controls){
+  sample_rpk        <- df_background[,sample]
+  names(sample_rpk) <- df_background$peptide
+  sample_rpk        <- sample_rpk[sample_rpk > 0]
+  
+  pct_vec        <- percentile(sample_rpk)
+  names(pct_vec) <- names(sample_rpk)
+  
+  pct_vec_target   <- pct_vec[names(pct_vec) %in% background_peptides]
+  min_gfap_pct     <- min(pct_vec_target)
+  all_min_gfap_pct <- c(all_min_gfap_pct,min_gfap_pct)
+}
+
+MIN_PCT_THRESH <- mean(all_min_gfap_pct)
+
+
+# Apply this threshold to entire data set
+all_samples   <- c(bead_controls,ref_controls,disease_samples)
+
+peptide_ids_to_keep <- c()
+for(sample in all_samples){
+  sample_rpk        <- df[,sample]
+  names(sample_rpk) <- df$peptide_id
+  # All rpk must be greater than zero
+  sample_rpk    <- sample_rpk[sample_rpk > 0]
+  
+  # Calculate Percentiles
+  pct_vec        <- percentile(sample_rpk)
+  names(pct_vec) <- names(sample_rpk)
+
+  pct_vec_filt <- pct_vec[pct_vec > MIN_PCT_THRESH]
+  peptide_ids_to_keep <- c(peptide_ids_to_keep,names(pct_vec_filt))
+}
+
+peptide_ids_to_keep <- unique(peptide_ids_to_keep)
+
+# Filter out all petides with low RPK
+df_filt <- df[df$peptide_id %in% peptide_ids_to_keep,]
+```
+
+# 6. calcluating ref mean on Filtered data
+```{r}
+df_filt$mean_ref     <- apply(df_filt[,c(ref_controls)], 1, mean)     # Control group
+df_filt$mean_pos     <- apply(df_filt[,c(bead_controls)], 1, mean)    # Bead Control group
+df_filt$mean_exp     <- apply(df_filt[,c(disease_samples)], 1, mean)  # Disease group
+```
+
+
+
+# 7. Caluculate FC (PairSeq_make_FC_df.r) - adds FC columns
+* FC is calculated for disease group and positive controls (bead controls)
+* Normalize (divide by mean) disease and bead samples by reference controls
+```{r}
+# PairSeq_make_FC_df.r  (one function)
+df_fc_exp <- makeFCdf(df_filt,
+                 target_columns = disease_samples,
+                 mean_column    = "mean_ref")
+df_fc_ref <- makeFCdf(df_filt,
+                 target_columns = ref_controls,
+                 mean_column    = "mean_exp")
+#df_fc_pos <- makeFCdf(df_filt,
+#                 target_columns = bead_controls,
+#                 mean_column    = "mean_pos")
+
+```
+
+
+# 8. (PairSeq_full_parse_fasta.r) - Apply all FC/RPK filters
+* This step is meant to apply all FC and RPK filters to narrow down a set of candidates
+```{r}
+start.time <- Sys.time()
+
+# Use a subset of data frame to optimize speed
+candidate_df <- fullParse(df = df_fc_exp,list_of_samples = disease_samples,FC_THRESH2 = 100)
+
+#candidate_df <- full_parse(df = df_fc_exp_sub,list_of_samples = disease_samples,FC_THRESH2 = 100)
+save(candidate_df,file = "final_candidates.RData")
+
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+time.taken
+
+#full_parse(df = df_fc_ref,list_of_samples = ref_controls,FC_THRESH2 = 34) # 34 FC is the Max
+
+# full_parse(df = df_fc_pos,list_of_samples = bead_controls)
+```
+
+### --take small subset of phage data to optimize speed of full_parse function
+```{r}
+# Only keep peptides with overlap
+#target_df <- candidate_df
+
+target_peptide_ids <- unique(target_df$peptide_id)
+df_fc_exp_sub <- df_fc_exp[df_fc_exp$peptide_id %in% target_peptide_ids,]
+
+# only keep a subset of genes
+target_genes <- unique(target_df$gene)
+target_genes <- target_genes[1:200]
+
+df_fc_exp_sub <- df_fc_exp_sub[df_fc_exp_sub$gene %in% target_genes,]
+```
+
+
+### --experiment with Kmer packages
+```{r}
+library(ape)
+data(woodmouse)
+x <- kcount(woodmouse, k = 3)
+```
+
+
+# 9. Use Kmer analysis to further filter candidates
+* keeping peptides that have at least a 7 AA sequence overlap.
+* Extend KMER analysis past the gene level to consider all genes
+```{r}
+start.time <- Sys.time()
+
+candidate_df_fin <- findKmerOverlap(candidate_df,KMER_SIZE = 7)
+save(candidate_df,candidate_df_fin,file = "final_candidates.RData")
+
+
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+time.taken
+
+write.csv(candidate_df_fin,file = "FTD_results/FTD_candidate_peptides.csv",quote = F)
+```
+
+
+
+# 10. Mathamatically assign a significant ranking system for final peptide results (Can wait until after PairSeq development is complete)
+* RPK, FC, complexity of KMers
+* create a Kmer count table of human proteome 
+* If petides span muliple isoforms of the same gene, apply a ratio weight so isoform with the higher RPK getting a higher weight
+
+Validation sets on MEEBO:
+* Anti hu & anti Yo
+* Sarah Vasquez Auto antibody sets
+
+
+# 11. Post analysis filter
+* feed peptide list into a database that reveals pepides with experimenatlly validated significance (example: peptides that show significant staining in lung tissue of patients with MS)
+
+* This post analysis could be an interactive shiny app
+
+* Rank score: rpk, FC, number of peptides it overlaps
+
+* query databases to pull info on each gene 
+
+```{r}
+library(hpar)
+data(hpaNormalTissue)
+
+# Overlapping genes
+overlapping_genes <- unique(candidate_df$gene[candidate_df$gene %in% hpaNormalTissue$Gene.name])
+
+# Test
+hpaNormalTissue[hpaNormalTissue$Gene.name %in% overlapping]
+
+```
+
+
+
