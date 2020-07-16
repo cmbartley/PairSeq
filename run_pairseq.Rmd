@@ -21,13 +21,21 @@ library(seqinr)
 library(dplyr)
 library(fmsb)  # for percentiles
 
-data_dir     <- "~/Work/Rprojects/PairSeq_Development/"
-pairseq_func <- "~/Work/Rprojects/PairSeq_Development/PairSeq/R/"
+data_dir     <- "~/rprojects/PairSeq_Development/phage_data/FTD_cohort/"
+results_dir  <- "~/rprojects/PairSeq_Development/Results/"
+pairseq_func <- "~/Tools/PairSeq/R/"
 func_list    <- list.files(pairseq_func)
 func_list    <- paste(pairseq_func,func_list,sep = "")
 
 setwd(data_dir)           # Set working directory
+dir.create(results_dir,recursive = T)
+
 sapply(func_list,source)  # Source all PairSeq functions
+```
+
+# INPUT FILES
+```{r}
+meebo_data_fh <- paste(c(data_dir,"FTD_Full_Phage_Run_w_controls.csv"),collapse = "")
 ```
 
 

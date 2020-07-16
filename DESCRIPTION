@@ -2,12 +2,10 @@ Package: PairSeq
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
-           role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
-License: What license it uses
+    person(given = "Ravi",family = "Dandekar",email = "ravi.dandekar@ucsf.edu",role = c("aut", "cre"))
+    person(given = "Chris",family = "Bartley",email = "christopher.bartley@ucsf.edu",role = c("aut", "cre"))
+Description: PairSeq pases phage data in order to identify important candidate peptides for further experimentation.
+License: GPL-3.0
 Encoding: UTF-8
 LazyData: true
+RoxygenNote: 7.1.1
