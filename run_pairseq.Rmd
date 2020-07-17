@@ -13,6 +13,8 @@ Full PairSeq Workflow
 * Once optimized, all code will be packaged into functions
 
 ```{r}
+library(PairSeq) # All PairSeq Functions
+
 library(data.table)
 library(stringr)
 # libraries from PairSeq functions
@@ -23,19 +25,17 @@ library(fmsb)  # for percentiles
 
 data_dir     <- "~/rprojects/PairSeq_Development/phage_data/FTD_cohort/"
 results_dir  <- "~/rprojects/PairSeq_Development/Results/"
-pairseq_func <- "~/Tools/PairSeq/R/"
-func_list    <- list.files(pairseq_func)
-func_list    <- paste(pairseq_func,func_list,sep = "")
 
 setwd(data_dir)           # Set working directory
 dir.create(results_dir,recursive = T)
-
-sapply(func_list,source)  # Source all PairSeq functions
 ```
 
 # INPUT FILES
 ```{r}
-meebo_data_fh <- paste(c(data_dir,"FTD_Full_Phage_Run_w_controls.csv"),collapse = "")
+meebo_data_fh          <- paste(c(data_dir,"FTD_Full_Phage_Run_w_controls.csv"),collapse = "")
+peptide_gene_map_fh    <- paste(c(data_dir,"peptide_gene_mapping.csv"),collapse = "")
+background_peptides_fh <- paste(c(data_dir,"background_peptides.txt"),collapse = "")
+metadata_fh            <- paste(c(data_dir,"FTD_clinical_sample_names.csv"),collapse = "")
 ```
 
 
@@ -44,19 +44,17 @@ meebo_data_fh <- paste(c(data_dir,"FTD_Full_Phage_Run_w_controls.csv"),collapse 
 ### a. Meebo/peptide table results
 * Dementia (),Healthy
 ```{r}
-meebo_data <- read.csv("FTD_Full_Phage_Run_w_controls.csv",stringsAsFactors = F)
-peptide_gene_map <- read.csv("peptide_gene_mapping.csv",stringsAsFactors = F)
+meebo_data <- read.csv(meebo_data_fh,stringsAsFactors = F)
+peptide_gene_map <- read.csv(peptide_gene_map_fh,stringsAsFactors = F)
 
 # List of peptide IDs used for setting RPK threshold
-background_peptides <- read.table("background_peptides.txt",stringsAsFactors = F)
+background_peptides <- read.table(background_peptides_fh,stringsAsFactors = F)
 background_peptides <- background_peptides$V1
-
-#source("R_Code/PairSeq_parse.r")
 ```
 
 ### b. sample metadata
 ```{r}
-ftd_sample_names_df <- read.csv("FTD_clinical_sample_names.csv",stringsAsFactors = F)
+ftd_sample_names_df <- read.csv(metadata_fh,stringsAsFactors = F)
 disease_names <- names(ftd_sample_names_df)
 disease_names <- disease_names[2:length(disease_names)]
 orig_names    <- as.character(ftd_sample_names_df[1,])
@@ -123,6 +121,13 @@ gfap_controls   <- column_names[grep("GFAP",column_names)]
 ref_controls    <- column_names[grep("NC_|BEADS",column_names)]
 disease_samples <- column_names[! column_names %in% c("peptide_id",names(peptide_gene_map), bead_controls,ref_controls)]
 
+# CSF - disease/reference
+disease_samples_csf     <- disease_samples[grep("CSF",disease_samples)]
+disease_samples_plasma  <- disease_samples[! disease_samples %in% disease_samples_csf]
+
+# Plasma Cells - disease/reference
+ref_controls_csf     <- ref_controls[grep("CSF|BEADS",ref_controls)]
+ref_controls_plasma  <- ref_controls[grep("plasma|BEADS",ref_controls)]
 ```
 
 
@@ -182,7 +187,10 @@ df_filt <- df[df$peptide_id %in% peptide_ids_to_keep,]
 
 # 6. calcluating ref mean on Filtered data
 ```{r}
-df_filt$mean_ref     <- apply(df_filt[,c(ref_controls)], 1, mean)     # Control group
+# Ctrl Means
+df_filt$mean_ref_csf    <- apply(df_filt[,c(ref_controls_csf)], 1, mean)     # Control group
+df_filt$mean_ref_plasma <- apply(df_filt[,c(ref_controls_plasma)], 1, mean)  # Control group
+
 df_filt$mean_pos     <- apply(df_filt[,c(bead_controls)], 1, mean)    # Bead Control group
 df_filt$mean_exp     <- apply(df_filt[,c(disease_samples)], 1, mean)  # Disease group
 ```
@@ -192,14 +200,21 @@ df_filt$mean_exp     <- apply(df_filt[,c(disease_samples)], 1, mean)  # Disease 
 # 7. Caluculate FC (PairSeq_make_FC_df.r) - adds FC columns
 * FC is calculated for disease group and positive controls (bead controls)
 * Normalize (divide by mean) disease and bead samples by reference controls
+* Calculate FC for CSF and Plasma separately then merge
 ```{r}
 # PairSeq_make_FC_df.r  (one function)
-df_fc_exp <- makeFCdf(df_filt,
-                 target_columns = disease_samples,
-                 mean_column    = "mean_ref")
-df_fc_ref <- makeFCdf(df_filt,
-                 target_columns = ref_controls,
-                 mean_column    = "mean_exp")
+df_fc_csf_exp <- makeFCdf(df_filt,
+                 target_columns = disease_samples_csf,
+                 mean_column    = "mean_ref_csf",  onlyFC = T)
+df_fc_plasma_exp <- makeFCdf(df_filt,
+                 target_columns = disease_samples_plasma,
+                 mean_column    = "mean_ref_plasma", onlyFC = T)
+
+df_fc_exp <- cbind(df_filt,df_fc_csf_exp,df_fc_plasma_exp)
+
+#df_fc_ref <- makeFCdf(df_filt,
+#                 target_columns = ref_controls,
+#                 mean_column    = "mean_exp")
 #df_fc_pos <- makeFCdf(df_filt,
 #                 target_columns = bead_controls,
 #                 mean_column    = "mean_pos")

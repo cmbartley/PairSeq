@@ -89,8 +89,6 @@ fullParse <- function(df,list_of_samples, FC_THRESH1 = 10, FC_THRESH2 = 100, SUM
 
                   # Verify that sum RPK of genes meets threshold
                   if (sum(df_get_50rpK[,samp]) >= SUM_RPK_THRESH){
-                    polygenes <- c(polygenes, gene)
-
                     # Verify at least one peptide has a FC greater than the 2nd threshold
                     if (nrow(df_get_50rpK) > 1){
                       peptide_fc_vec <- df_get_50rpK[,samp_fc]

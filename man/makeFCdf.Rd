@@ -4,7 +4,7 @@
 \alias{makeFCdf}
 \title{Creates Fold Change Columns}
 \usage{
-makeFCdf(df, target_columns, mean_column)
+makeFCdf(df, target_columns, mean_column, onlyFC = FALSE)
 }
 \arguments{
 \item{df}{phage peptide count matrix}
@@ -12,12 +12,14 @@ makeFCdf(df, target_columns, mean_column)
 \item{target_columns}{list of target samples to analyze}
 
 \item{mean_column}{column containing the mean RPK of samples that represent the controls for normalization}
+
+\item{onlyFC}{option to format the output and return full data frame or only the FC columns <default: FALSE>}
 }
 \value{
 returns phage results with FC columns for each target sample.
 }
 \description{
-takes input of phage results and calculates Fold Change based on input columns
+takes input of phage results and calculates Fold Change (FC) based on input columns
 }
 \examples{
 makeFCdf(df, target_columns, mean_column)

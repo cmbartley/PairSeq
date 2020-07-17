@@ -1,5 +1,5 @@
 Package: PairSeq
-Title: What the Package Does (One Line, Title Case)
+Title: Phage peptide candidate identification algorithm
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Ravi",family = "Dandekar",email = "ravi.dandekar@ucsf.edu",role = c("aut", "cre"))
@@ -8,4 +8,12 @@ Description: PairSeq pases phage data in order to identify important candidate p
 License: GPL-3.0
 Encoding: UTF-8
 LazyData: true
+Depends: R (>= 3.4.0)
+Imports: 
+  data.table,
+  stringr,
+  tibble,
+  seqinr,
+  dplyr,
+  fmsb
 RoxygenNote: 7.1.1
