@@ -13,13 +13,14 @@ Full PairSeq Workflow
 * Once optimized, all code will be packaged into functions
 
 ```{r}
+library(devtools)
 library(PairSeq) # All PairSeq Functions
 
 library(data.table)
 library(stringr)
 # libraries from PairSeq functions
 library(tibble)
-library(seqinr)
+library(seqinr)  # write.fasta
 library(dplyr)
 library(fmsb)  # for percentiles
 
@@ -230,8 +231,7 @@ start.time <- Sys.time()
 # Use a subset of data frame to optimize speed
 candidate_df <- fullParse(df = df_fc_exp,list_of_samples = disease_samples,FC_THRESH2 = 100)
 
-#candidate_df <- full_parse(df = df_fc_exp_sub,list_of_samples = disease_samples,FC_THRESH2 = 100)
-save(candidate_df,file = "final_candidates.RData")
+save(candidate_df,file = paste(c(data_dir,"final_candidates.RData"),collapse = ""))
 
 end.time <- Sys.time()
 time.taken <- end.time - start.time
@@ -242,28 +242,6 @@ time.taken
 # full_parse(df = df_fc_pos,list_of_samples = bead_controls)
 ```
 
-### --take small subset of phage data to optimize speed of full_parse function
-```{r}
-# Only keep peptides with overlap
-#target_df <- candidate_df
-
-target_peptide_ids <- unique(target_df$peptide_id)
-df_fc_exp_sub <- df_fc_exp[df_fc_exp$peptide_id %in% target_peptide_ids,]
-
-# only keep a subset of genes
-target_genes <- unique(target_df$gene)
-target_genes <- target_genes[1:200]
-
-df_fc_exp_sub <- df_fc_exp_sub[df_fc_exp_sub$gene %in% target_genes,]
-```
-
-
-### --experiment with Kmer packages
-```{r}
-library(ape)
-data(woodmouse)
-x <- kcount(woodmouse, k = 3)
-```
 
 
 # 9. Use Kmer analysis to further filter candidates
@@ -280,8 +258,117 @@ end.time <- Sys.time()
 time.taken <- end.time - start.time
 time.taken
 
-write.csv(candidate_df_fin,file = "FTD_results/FTD_candidate_peptides.csv",quote = F)
+write.csv(candidate_df_fin,file = "~/rprojects/PairSeq_Development/Results/FTD_candidate_peptides.csv",quote = F)
 ```
+
+
+### --take small subset of phage data to optimize speed of fullParse function
+```{r}
+# only keep a subset of genes
+target_genes <- unique(candidate_df$gene)
+target_genes <- target_genes[1:100]
+
+candidate_df_sub <- candidate_df[candidate_df$gene %in% target_genes,]
+```
+
+### -- RUN kmer analysis on subset
+*  OPTIMIZE for speed and add in new columns to help with ranking
+```{r}
+start.time <- Sys.time()
+
+candidate_df_sub_fin <- findKmerOverlap(candidate_df_sub,KMER_SIZE = 7)
+
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+time.taken
+```
+
+# 9.5 ALTERNATIVE approach
+* try doing a mutliple alignment follow by kcount
+
+### a. Create output FASTA
+```{r}
+library(seqinr)
+
+# Subset results
+target_genes     <- unique(candidate_df$gene)
+target_genes     <- target_genes[1:200]
+candidate_df_sub <- candidate_df[candidate_df$gene %in% target_genes,]
+
+# write FASTA
+fh <- "~/rprojects/PairSeq_Development/candidate_peptides.subset.fasta"
+write.fasta(sequences = as.list(candidate_df$sequence),names = as.list(candidate_df$peptide_id),file.out = fh)
+
+```
+
+### b. kcount
+```{r}
+library(kmer)
+library(ape)
+fh               <- "~/rprojects/PairSeq_Development/candidate_peptides.subset.fasta"
+mySequences      <- read.FASTA(fh,type = "AA")
+
+# Kcount of 7mers
+start.time <- Sys.time()
+
+kmer_count_table <- kcount(mySequences,k = 7)
+
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+time.taken
+```
+
+#### --SAVE ENV
+```{r}
+save(list = ls(),file = "~/rprojects/PairSeq_Development/currentEnv.RData")
+```
+
+### c. Identify all peptides that share Kmers
+```{r}
+start.time <- Sys.time()
+
+pep_to_keep      <- list()
+pep_gene_overlap <- list()
+for (pep in row.names(kmer_count_table)) {
+  kmer_df <- kmer_count_table[row.names(kmer_count_table) %in% pep,]
+  target_kmers <- names(kmer_df[kmer_df > 0])
+  
+  kmer_df_sub <- kmer_count_table[,colnames(kmer_count_table) %in% target_kmers]
+  kmer_df_sub <- as.data.frame(kmer_df_sub) 
+  # Change the summing somehow
+  kmer_df_sub$total <- rowSums(kmer_df_sub)
+  kmer_df_sub       <- kmer_df_sub[kmer_df_sub$total > 0,]
+  
+  if (nrow(kmer_df_sub) > 1){
+    total_overlapping_pep <- length(unique(row.names(kmer_df_sub))) -1 
+    pep_to_keep[[pep]] <- total_overlapping_pep
+    
+    # Check for gene level overlap
+    pep_gene <- unlist(strsplit(pep,"_"))[1]
+    kmer_df_sub$gene <- tstrsplit(row.names(kmer_df_sub),"_")[[1]]
+    kmer_df_gene <- kmer_df_sub[kmer_df_sub$gene %in% pep_gene,]
+    if (nrow(kmer_df_gene) > 1){
+      total_overlapping_pep_gene <- length(unique(row.names(kmer_df_gene))) -1 
+      pep_gene_overlap[[pep]] <- total_overlapping_pep_gene
+    }
+    
+  } else{
+    # No Kmer overalp
+    cat(paste0(pep,"\n"))
+  }
+  
+}
+
+end.time <- Sys.time()
+time.taken <- end.time - start.time
+time.taken
+```
+
+### d. Subset final candidate data frame
+```{r}
+candidate_df_fin <- candidate_df[candidate_df$peptide_id %in% names(pep_gene_overlap),]
+```
+
 
 
 
@@ -293,6 +380,36 @@ write.csv(candidate_df_fin,file = "FTD_results/FTD_candidate_peptides.csv",quote
 Validation sets on MEEBO:
 * Anti hu & anti Yo
 * Sarah Vasquez Auto antibody sets
+
+* Trying to follow some online material to learn how impliment balanced random forrest
+```{r}
+library(ranger) #Best random forest implementation in R
+
+#Make a mock dataset 
+set.seed(43)
+nrow <- 1000
+ncol <- 10
+X <- matrix(rnorm(nrow * ncol), ncol=ncol)
+CF <- rnorm(ncol)
+Y <- (X %*% CF + rnorm(nrow))[,1]
+Y <- as.integer(Y > quantile(Y, 0.90))
+table(Y)
+
+#Compute weights to balance the RF
+w <- 1/table(Y)
+w <- w/sum(w)
+weights <- rep(0, nrow)
+weights[Y == 0] <- w['0']
+weights[Y == 1] <- w['1']
+table(weights, Y)
+
+#Fit the RF
+data <- data.frame(Y=factor(ifelse(Y==0, 'no', 'yes')), X)
+model <- ranger(Y~., data, case.weights=weights)
+print(model)
+
+```
+
 
 
 # 11. Post analysis filter
