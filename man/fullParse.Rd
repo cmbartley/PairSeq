@@ -7,6 +7,7 @@
 fullParse(
   df,
   list_of_samples,
+  MIN_RPK = 0,
   FC_THRESH1 = 10,
   FC_THRESH2 = 100,
   SUM_RPK_THRESH = 50
@@ -16,6 +17,8 @@ fullParse(
 \item{df}{phage peptide count matrix}
 
 \item{list_of_samples}{list of target samples to analyze}
+
+\item{MIN_RPK}{Threshold for minimum RPK value <default: 0>}
 
 \item{FC_THRESH1}{Fold Change threshold 1 <default: 10>}
 
@@ -31,5 +34,5 @@ takes input of phage results and applies RPK and Fold Change filters
 then returns a subset of phage results
 }
 \examples{
-fullParse(df,list_of_samples, FC_THRESH1 = 10, FC_THRESH2 = 100, SUM_RPK_THRESH = 50)
+fullParse(df,list_of_samples, MIN_RPK = 2,FC_THRESH1 = 10, FC_THRESH2 = 100, SUM_RPK_THRESH = 50)
 }

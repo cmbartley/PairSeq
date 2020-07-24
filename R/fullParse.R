@@ -57,14 +57,15 @@ findKmerOverlap <- function(peptide_df, KMER_SIZE = 7){
 #' then returns a subset of phage results
 #' @param df phage peptide count matrix
 #' @param list_of_samples list of target samples to analyze
+#' @param MIN_RPK Threshold for minimum RPK value <default: 0>
 #' @param FC_THRESH1 Fold Change threshold 1 <default: 10>
 #' @param FC_THRESH2 Fold Change threshold 2 <default: 100>
 #' @param SUM_RPK_THRESH Gene level total RPK threshold <default: 50>
 #' @return returns a subset of phage results with peptides that pass all filters.
-#' @examples fullParse(df,list_of_samples, FC_THRESH1 = 10, FC_THRESH2 = 100, SUM_RPK_THRESH = 50)
+#' @examples fullParse(df,list_of_samples, MIN_RPK = 2,FC_THRESH1 = 10, FC_THRESH2 = 100, SUM_RPK_THRESH = 50)
 #' @export
 
-fullParse <- function(df,list_of_samples, FC_THRESH1 = 10, FC_THRESH2 = 100, SUM_RPK_THRESH = 50){
+fullParse <- function(df,list_of_samples, MIN_RPK = 0,FC_THRESH1 = 10, FC_THRESH2 = 100, SUM_RPK_THRESH = 50){
         candidate_peptides <- c()
 
         for(samp in list_of_samples){
@@ -72,7 +73,8 @@ fullParse <- function(df,list_of_samples, FC_THRESH1 = 10, FC_THRESH2 = 100, SUM
                 samp_fc <- paste0(samp,"_FC")
 
                 #create sample-specific dataframe of minimum rpK >= 2 and minimum FC >= 10
-                df_2rpK_FC10 <- subset(df, df[,samp_fc] >= FC_THRESH1)
+                df_2rpK      <- subset(df, df[,samp] >= MIN_RPK)
+                df_2rpK_FC10 <- subset(df_2rpK, df_2rpK[,samp_fc] >= FC_THRESH1)
 
                 #create separate sample-specific dataframe of minimum rpK >= 2 and minimum FC >= 100
                 df_2rpK_FC10_FC100 <- subset(df_2rpK_FC10, df_2rpK_FC10[,samp_fc] >= FC_THRESH2)

@@ -381,7 +381,28 @@ Validation sets on MEEBO:
 * Anti hu & anti Yo
 * Sarah Vasquez Auto antibody sets
 
+### a. Try to assess the distribution and stats
+```{r}
+library(ggplot2)
+disease_samples_fc <- disease_samples
+
+df_subset <- candidate_df_fin[,names(candidate_df_fin) %in% disease_samples]
+
+df_subset$mean <- rowMeans(df_subset)
+df_subset <- df_subset[df_subset$mean > 0,]
+
+p <- ggplot(df_subset, aes(x=mean)) + geom_density()
+p
+```
+
+
+### b. ranking via random forrest
 * Trying to follow some online material to learn how impliment balanced random forrest
+https://stats.stackexchange.com/questions/171380/implementing-balanced-random-forest-brf-in-r-using-randomforests/373695
+  * random forrest tutorial
+  https://towardsdatascience.com/random-forest-in-r-f66adf80ec9
+
+* Alternatively we could try SVM
 ```{r}
 library(ranger) #Best random forest implementation in R
 
