@@ -3,3 +3,6 @@
 export(findKmerOverlap)
 export(fullParse)
 export(makeFCdf)
+import(ape)
+import(kmer)
+import(seqinr)
