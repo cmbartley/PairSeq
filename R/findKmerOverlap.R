@@ -48,3 +48,64 @@ findKmerOverlap <- function(peptide_df, KMER_SIZE = 7, TEMP_FASTA = "./temp_pep.
 
   return(peptide_df_clean)
 }
+
+
+
+#' @title Identify Kmer overlaps
+#' @description takes input of phage results and finds all Kmer overlaps among all peptide sequences
+#' then returns a subset of phage results with peptides that contain overlaps
+#' @param peptide_df phage peptide count matrix
+#' @param KMER_SIZE size of Kmer <default: 7>
+#' @return returns phage results with a 'KmerOverlap' column saying whether peptides that contain Kmer overlaps with a 'yes' or 'no'.
+#' @examples findKmerOverlap.old(peptide_df,KMER_SIZE = 7)
+#' @export
+
+findKmerOverlap.old <- function(peptide_df, KMER_SIZE = 7){
+  # Initialize list of Kmers
+  kmer_list         <- list()
+  overlapping_kmers <- c()
+  peptides_to_keep  <- c()
+
+
+  for(i in 1:nrow(peptide_df)){
+    row <- peptide_df[i,]
+    pep <- row$peptide_id
+    seq <- unlist(strsplit(row$sequence,""))
+
+    end_pos <- length(seq) - KMER_SIZE + 1
+    for(i in 1:end_pos){
+      kmer_seq <- seq[i:(i+KMER_SIZE)]
+      kmer_seq <- paste(kmer_seq,collapse = "")
+
+      # Add kmer into KMER list with peptide ID
+      if(kmer_seq %in% names(kmer_list)){
+        # Add peptide ID to Kmer list
+        current_peptides <- kmer_list[[kmer_seq]]
+        all_peptides <- unique(c(current_peptides,pep))
+        kmer_list[[kmer_seq]] <- all_peptides
+
+        # Store all overlapping kmer sequences and peptide IDs
+        overlapping_kmers <- c(overlapping_kmers,kmer_seq)
+        peptides_to_keep <- c(peptides_to_keep,all_peptides)
+      }else {
+        kmer_list[[kmer_seq]] <- pep
+      }
+
+    }
+  }
+  peptides_to_keep  <- unique(peptides_to_keep)
+  overlapping_kmers <- unique(overlapping_kmers)
+
+  # KMER list is more of a sanity check
+  kmer_list_overlap <- kmer_list[overlapping_kmers]
+
+  # Add column for Kmer overlap
+  kmer_overlap_col <- peptide_df$peptide_id
+  kmer_overlap_col[kmer_overlap_col %in% peptides_to_keep] <- "yes"
+  kmer_overlap_col[! kmer_overlap_col %in% "yes"]          <- "no"
+
+  peptide_df$KmerOverlap <- kmer_overlap_col
+  #peptide_df_clean <- peptide_df[peptide_df$peptide_id %in% peptides_to_keep,]
+
+  return(peptide_df)
+}
