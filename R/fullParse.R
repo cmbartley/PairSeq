@@ -62,3 +62,37 @@ fullParse <- function(df,list_of_samples, MIN_RPK = 0,FC_THRESH1 = 10, FC_THRESH
         return(candidate_df)
 }
 
+
+
+#' @title Simple Filters for phage data
+#' @description takes input of phage results and applies RPK and Fold Change filters
+#' then returns a subset of phage results. This is more simple version of 'fullParse'
+#' @param peptide_df phage peptide count matrix
+#' @param list_of_samples list of all samples. It is assumed the FC columns are sample names with '_FC' at the end
+#' @param RPK_THRESH RPK threshold <default: 20>
+#' @param FC_THRESH Fold Change threshold <default: 100>
+#' @param peptide.id.col Name of column with unique Peptide ID <default: "peptide_id">
+#' @return returns a subset of phage results with peptides that pass all filters.
+#' @examples filterPeptides(peptide_df,list_of_samples, RPK_THRESH = 20,FC_THRESH = 100,peptide.id.col = "peptide_id")
+#' @export
+
+
+filterPeptides <- function(peptide_df, list_of_samples,RPK_THRESH = 20, FC_THRESH = 100,peptide.id.col = "peptide_id"){
+  list_of_samples  <- as.list(list_of_samples)
+
+  filterSample <- function(samp, df,RPK_THRESH = 20, FC_THRESH = 100,peptide.id.col = "peptide_id"){
+    samp_fc <- paste0(samp,"_FC")
+    df_sub  <- subset(df, df[,samp] >= RPK_THRESH)
+    df_sub  <- subset(df_sub, df_sub[,samp_fc] >= FC_THRESH)
+    pep_list <- df_sub[,peptide.id.col]
+
+    return(pep_list)
+  }
+
+  peptides_to_keep <- unlist(lapply(list_of_samples, filterSample,
+                                    df=peptide_df,RPK_THRESH=RPK_THRESH,FC_THRESH=FC_THRESH,peptide.id.col=peptide.id.col))
+
+  peptide_df_sub <- peptide_df[peptide_df[,peptide.id.col] %in% peptides_to_keep,]
+
+  return(peptide_df_sub)
+}
