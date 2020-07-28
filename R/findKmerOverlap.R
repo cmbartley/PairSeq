@@ -74,7 +74,7 @@ findKmerOverlap.old <- function(peptide_df, KMER_SIZE = 7){
 
     end_pos <- length(seq) - KMER_SIZE + 1
     for(i in 1:end_pos){
-      kmer_seq <- seq[i:(i+KMER_SIZE)]
+      kmer_seq <- seq[i:(i+KMER_SIZE -1)]
       kmer_seq <- paste(kmer_seq,collapse = "")
 
       # Add kmer into KMER list with peptide ID
