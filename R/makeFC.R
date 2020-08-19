@@ -14,8 +14,8 @@
 makeFCdf <- function(df, target_columns, mean_column, onlyFC = FALSE){
   FC_colnames <- paste0(target_columns,"_FC")
 
-  FC_df           <- df[,target_columns] / df[,mean_column]
-  colnames(FC_df) <- FC_colnames
+  FC_df            <- as.data.frame(df[,target_columns] / df[,mean_column])
+  colnames(FC_df)  <- FC_colnames
 
   df_out <- cbind(df, FC_df)
   if (onlyFC == TRUE){
