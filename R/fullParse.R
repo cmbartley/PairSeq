@@ -76,7 +76,6 @@ fullParse <- function(df,list_of_samples, MIN_RPK = 0,FC_THRESH1 = 10, FC_THRESH
 #' @examples filterPeptides(peptide_df,list_of_samples, RPK_THRESH = 20,FC_THRESH = 100,peptide.id.col = "peptide_id")
 #' @export
 
-
 filterPeptides <- function(peptide_df, list_of_samples,RPK_THRESH = 20, FC_THRESH = 100,peptide.id.col = "peptide_id"){
   list_of_samples  <- as.list(list_of_samples)
 
@@ -90,7 +89,8 @@ filterPeptides <- function(peptide_df, list_of_samples,RPK_THRESH = 20, FC_THRES
   }
 
   peptides_to_keep <- unlist(lapply(list_of_samples, filterSample,
-                                    df=peptide_df,RPK_THRESH=RPK_THRESH,FC_THRESH=FC_THRESH,peptide.id.col=peptide.id.col))
+                                    df=peptide_df,RPK_THRESH=RPK_THRESH,FC_THRESH=FC_THRESH,
+                                    peptide.id.col=peptide.id.col))
 
   peptide_df_sub <- peptide_df[peptide_df[,peptide.id.col] %in% peptides_to_keep,]
 

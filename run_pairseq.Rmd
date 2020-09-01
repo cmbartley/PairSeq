@@ -250,7 +250,7 @@ time.taken
 ```{r}
 start.time <- Sys.time()
 
-candidate_df_fin <- findKmerOverlap(candidate_df,KMER_SIZE = 7)
+candidate_df_fin <- findKmerOverlap.old(candidate_df,KMER_SIZE = 7)
 save(candidate_df,candidate_df_fin,file = "final_candidates.RData")
 
 
@@ -276,7 +276,7 @@ candidate_df_sub <- candidate_df[candidate_df$gene %in% target_genes,]
 ```{r}
 start.time <- Sys.time()
 
-candidate_df_sub_fin <- findKmerOverlap(candidate_df_sub,KMER_SIZE = 7)
+candidate_df_sub_fin <- findKmerOverlap.old(candidate_df_sub,KMER_SIZE = 7)
 
 end.time <- Sys.time()
 time.taken <- end.time - start.time
