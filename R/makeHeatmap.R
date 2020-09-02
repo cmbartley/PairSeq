@@ -139,7 +139,7 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
                 color = color_pal,breaks = break_list,fontsize_row = 4.5,
                 annotation_col = diagnosis_annot, annotation_row = genes_annot,
                 annotation_legend = F,annotation_names_col = F, annotation_names_row = F,annotation_colors = anno_colors,
-                gaps_col = c(2),cellheight = 5)
+                gaps_col = c(length(target.samples)),cellheight = 5)
 
   return(p)
 }
