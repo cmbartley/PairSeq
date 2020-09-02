@@ -14,6 +14,7 @@
 #' @return variable containing resulting heatmap.
 #' @examples makeHeatmap(df,patient,target.samples,disease.samples,reference.samples)
 #' @import pheatmap
+#' @import gplots
 #' @import data.table
 #' @export
 
@@ -24,8 +25,8 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
   par(mar=c(1,1,1,1))
 
   row.names(df) <- df[,peptide.id.col]
-  df$peptide_id <- NULL
-  df$gene       <- NULL
+  df[,peptide.id.col] <- NULL
+  df[,gene.col]       <- NULL
 
 
   disease.samples.rem   <- disease.samples[! disease.samples %in% target.samples]
@@ -82,7 +83,8 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
     gene_peptides_order <- c()
     if (nrow(gene_df) == 1){
       gene_peptides_order <- row.names(gene_df)
-    }else{
+    } else {
+      if(nrow(gene_df) == 0){next}
       gene_hp_mtx  <- heatmap.2(as.matrix(gene_df))
       gene_peptides       <- row.names(gene_df)
       gene_peptides_order <- gene_peptides[gene_hp_mtx$rowInd]
