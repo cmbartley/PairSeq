@@ -11,6 +11,8 @@
 #' @param reference.annot column annotation for reference samples
 #' @param gene.col column name for gene name in input data frame <default: "gene">
 #' @param peptide.id.col column name for peptide IDs in input data frame <default: "peptide_id">
+#' @param min.rpk For heatmaps set 0 values to an inputted minimum RPK value <default: 0>
+#' @param break.list This determines the margins for the resultsing heatmap. the only options are (1,2,3,4) <default: NULL>
 #' @return variable containing resulting heatmap.
 #' @examples makeHeatmap(df,patient,target.samples,disease.samples,reference.samples)
 #' @import pheatmap
@@ -20,7 +22,7 @@
 
 makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_id",target.samples,
                         disease.samples,reference.samples, normalization.method = "log10",
-                        disease.annot = "CoV",reference.annot = "Reference") {
+                        disease.annot = "COVID-19+",reference.annot = "REFERENCE",min.rpk = 0, break.list = NULL) {
   # Set the margins for heatmaps
   par(mar=c(1,1,1,1))
 
@@ -32,7 +34,36 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
   disease.samples.rem   <- disease.samples[! disease.samples %in% target.samples]
   reference.samples.rem <- reference.samples[! reference.samples %in% target.samples]
 
-  df <- df[,c(target.samples,disease.samples.rem,reference.samples.rem)]
+  # Order by replicate
+  orderSamples <- function(sample.vec) {
+    sample.vec.order <- c()
+
+    name_vec <- c()
+    for (i in 1:length(sample.vec)) {
+      sample <- sample.vec[i]
+      name  <- ""
+      if(grepl("Bead",sample)){
+        name <- unlist(strsplit(sample,"_"))[1]
+      }else{
+        name <- unlist(strsplit(sample,"_"))[2]
+      }
+      name_vec <- c(name_vec,name)
+    }
+    name_vec <- unique(name_vec)
+
+    # Now order samples
+    for (name in name_vec) {
+      pt.vec <- sort(sample.vec[grep(name,sample.vec)])
+      sample.vec.order <- c(sample.vec.order,pt.vec)
+    }
+
+    return(sample.vec.order)
+  }
+
+  disease.samples.rem.order   <- orderSamples(disease.samples.rem)
+  reference.samples.rem.order <- orderSamples(reference.samples.rem)
+
+  df <- df[,c(target.samples,disease.samples.rem.order,reference.samples.rem.order)]
 
   ## Normalize Data
 
@@ -56,8 +87,10 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
   df_mnorm            <- as.matrix(df_mnorm)
 
   # Log10 transform
-  df_log10                   <- log10(as.matrix(df))
-  df_log10[df_log10 == -Inf] <- 0
+  mtx           <- as.matrix(df)
+  mtx[mtx == 0] <- min.rpk
+  df_log10      <- log10(mtx)
+  #df_log10[df_log10 == -Inf] <- 0
 
 
   df_fmt <- as.data.frame(df)
@@ -65,13 +98,19 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
   if (normalization.method == "minmax")   {df_fmt <- as.data.frame(df_norm)}
   if (normalization.method == "meannorm") {df_fmt <- as.data.frame(df_mnorm)}
 
-
-
   ## Get Gene order
-  heatmap_mtx   <- heatmap.2(as.matrix(df_fmt))
-  all_peptides  <- row.names(df_fmt)
-  peptide_order <- all_peptides[heatmap_mtx$rowInd]
-  gene_list    <- unique(tstrsplit(peptide_order,"_")[[1]])
+  gene_list     <- c()
+  peptide_order <- c()
+
+  if(nrow(df_fmt) == 1){
+    peptide_order <- row.names(df_fmt)
+    gene_list     <- tstrsplit(peptide_order,"_")[[1]]
+  } else{
+    heatmap_mtx   <- heatmap.2(as.matrix(df_fmt))
+    all_peptides  <- row.names(df_fmt)
+    peptide_order <- all_peptides[heatmap_mtx$rowInd]
+    gene_list    <- unique(tstrsplit(peptide_order,"_")[[1]])
+  }
 
   df_fmt[,gene.col] <- tstrsplit(row.names(df_fmt),"_")[[1]]
 
@@ -125,6 +164,13 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
   if (normalization.method == "minmax")  {break_list = break_list1}
   if (normalization.method == "meannorm"){break_list = break_list1}
 
+  if(!is.null(break.list)){
+    if (break.list == 1){break_list = break_list1}
+    if (break.list == 2){break_list = break_list2}
+    if (break.list == 3){break_list = break_list3}
+    if (break.list == 4){break_list = break_list4}
+  }
+
   color_pal  <- bluered(100)
 
   ## Heatmap command
@@ -134,6 +180,20 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
   colcolor        <- c("purple", "darkgreen")
   names(colcolor) <- c(disease.annot, reference.annot)
   anno_colors <- list(diagnosis = colcolor)
+
+  # Row annotation gene block colors
+  all_genes <- as.character(unique(genes_annot$genes_vec))
+  rowcolor <- c()
+
+  temp_col <- "white"
+  for (gene in all_genes) {
+    if(temp_col == "white"){
+      temp_col = "black"
+    } else if (temp_col == "black"){
+      temp_col = "white"
+    }
+    rowcolor <- c(rowcolor,temp_col)
+  }
 
   p <- pheatmap(df_fmt,cluster_cols = F, cluster_rows = F,
                 color = color_pal,breaks = break_list,fontsize_row = 4.5,
