@@ -13,8 +13,12 @@ makeHeatmap(
   disease.samples,
   reference.samples,
   normalization.method = "log10",
-  disease.annot = "CoV",
-  reference.annot = "Reference"
+  disease.annot = "COVID-19+",
+  reference.annot = "REFERENCE",
+  min.rpk = 0,
+  break.list = NULL,
+  gene.order = c(),
+  avg.non.target.columns = FALSE
 )
 }
 \arguments{
@@ -37,6 +41,14 @@ makeHeatmap(
 \item{disease.annot}{column annotation for disease samples}
 
 \item{reference.annot}{column annotation for reference samples}
+
+\item{min.rpk}{For heatmaps set 0 values to an inputted minimum RPK value <default: 0>}
+
+\item{break.list}{This determines the margins for the resultsing heatmap. the only options are (1,2,3,4) <default: NULL>}
+
+\item{gene.order}{Vector of gene names to force the order in which peptides are displayed in the heatmap <default: c()>}
+
+\item{avg.non.target.columns}{Average the replicates for all samples that are not in target.samples <default: FALSE>}
 }
 \value{
 variable containing resulting heatmap.
