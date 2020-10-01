@@ -25,7 +25,8 @@
 makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_id",target.samples,
                         disease.samples,reference.samples, normalization.method = "log10",
                         disease.annot = "COVID-19+",reference.annot = "REFERENCE",min.rpk = 0,
-                        break.list = NULL, gene.order = c(),avg.non.target.columns = FALSE) {
+                        break.list = NULL, gene.order = c(),avg.non.target.columns = FALSE,disease.first = TRUE,
+                        cell.height=5,cell.width=5, num.pos.controls = 1,null.ip.col = "Bead") {
   # Set the margins for heatmaps
   par(mar=c(1,1,1,1))
 
@@ -134,7 +135,7 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
       sumrpk_vec <- c()
 
       for (g in genes) {
-        gene_df <- df_fmt[grep(g,row.names(df_fmt)),target.samples]
+        gene_df <- as.data.frame(df_fmt[grep(g,row.names(df_fmt)),target.samples])
         gene_sum_rpk <- sum(rowSums(gene_df))
         sumrpk_vec <- c(sumrpk_vec,gene_sum_rpk)
       }
@@ -181,6 +182,14 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
 
   ## Re-order list of genes in heatmap
   df_fmt <- df_fmt[gene_list_ordered,]
+
+  # Re-order columns incase disease needs to be towards the right
+  if(disease.first != TRUE){
+    ref_no_bead <- reference.samples.rem.order[! reference.samples.rem.order %in% null.ip.col]
+    reordered_cols <- c(target.samples,ref_no_bead,disease.samples.rem.order,null.ip.col)
+
+    df_fmt <- df_fmt[,reordered_cols]
+  }
 
 
   ## Annotation column Samples ----
@@ -261,12 +270,29 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
 
   # Create annotation color list
   anno_colors <- list(diagnosis = colcolor,genes_vec = rowcolor)
+  gap1 <- length(target.samples)
+  gap2 <- length(c(target.samples,disease.samples.rem.order))
+  if(disease.first != TRUE){gap2 <- length(c(target.samples,reference.samples.rem.order)) - num.pos.controls}
+  gap3 <- length(names(df_fmt)) - num.pos.controls
+
+  # Custom Row names
+  cust_labels_row <- row.names(df_fmt)
+  cust_labels_row <- tstrsplit(cust_labels_row,"_")[[1]]
+
+  for (gene in unique(cust_labels_row)) {
+    gene_sub <- cust_labels_row[cust_labels_row %in% gene]
+    if (length(gene_sub)> 1) {
+      gene_sub[2:length(gene_sub)] <- ""
+    }
+    cust_labels_row[cust_labels_row %in% gene] <- gene_sub
+  }
 
   p <- pheatmap(df_fmt,cluster_cols = F, cluster_rows = F,
                 color = color_pal,breaks = break_list,fontsize_row = 4.5,
                 annotation_col = diagnosis_annot, annotation_row = genes_annot,
                 annotation_legend = F,annotation_names_col = F, annotation_names_row = F,annotation_colors = anno_colors,
-                gaps_col = c(length(target.samples)),cellheight = 5, border_color = NA)
+                gaps_col = c(gap1,gap2,gap3),cellheight = cell.height, cellwidth = cell.width,
+                border_color = NA,labels_row = cust_labels_row)
 
   return(p)
 }

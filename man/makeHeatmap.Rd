@@ -18,7 +18,12 @@ makeHeatmap(
   min.rpk = 0,
   break.list = NULL,
   gene.order = c(),
-  avg.non.target.columns = FALSE
+  avg.non.target.columns = FALSE,
+  disease.first = TRUE,
+  cell.height = 5,
+  cell.width = 5,
+  num.pos.controls = 1,
+  null.ip.col = "Bead"
 )
 }
 \arguments{
