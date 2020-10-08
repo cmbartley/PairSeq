@@ -15,6 +15,7 @@
 #' @param break.list This determines the margins for the resultsing heatmap. the only options are (1,2,3,4) <default: NULL>
 #' @param gene.order Vector of gene names to force the order in which peptides are displayed in the heatmap <default: c()>
 #' @param avg.non.target.columns Average the replicates for all samples that are not in target.samples <default: FALSE>
+#' @param transpose.heatmap option to transpose the heatmaps columns and rows <default: FALSE>
 #' @return variable containing resulting heatmap.
 #' @examples makeHeatmap(df,patient,target.samples,disease.samples,reference.samples)
 #' @import pheatmap
@@ -26,7 +27,7 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
                         disease.samples,reference.samples, normalization.method = "log10",
                         disease.annot = "COVID-19+",reference.annot = "REFERENCE",min.rpk = 0,
                         break.list = NULL, gene.order = c(),avg.non.target.columns = FALSE,disease.first = TRUE,
-                        cell.height=5,cell.width=5, num.pos.controls = 1,null.ip.col = "Bead") {
+                        cell.height=5,cell.width=5, num.pos.controls = 1,null.ip.col = "Bead",transpose.heatmap=FALSE) {
   # Set the margins for heatmaps
   par(mar=c(1,1,1,1))
 
@@ -46,10 +47,11 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
     for (i in 1:length(sample.vec)) {
       sample <- sample.vec[i]
       name  <- ""
-      if(grepl("Bead",sample)){
+      if(grepl("Bead|GFAP",sample)){
         name <- unlist(strsplit(sample,"_"))[1]
       }else{
-        name <- unlist(strsplit(sample,"_"))[2]
+        name_comp <- unlist(strsplit(sample,"_"))
+        name <- paste(name_comp[2:(length(name_comp)-1)],collapse = "_")
       }
       name_vec <- c(name_vec,name)
     }
@@ -64,8 +66,8 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
     return(sample.vec.order)
   }
 
-  disease.samples.rem.order   <- orderSamples(disease.samples.rem)
-  reference.samples.rem.order <- orderSamples(reference.samples.rem)
+  disease.samples.rem.order   <- unique(orderSamples(disease.samples.rem))
+  reference.samples.rem.order <- unique(orderSamples(reference.samples.rem))
 
   df <- df[,c(target.samples,disease.samples.rem.order,reference.samples.rem.order)]
 
@@ -172,9 +174,18 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
       gene_peptides_order <- row.names(gene_df)
     } else {
       if(nrow(gene_df) == 0){next}
-      gene_hp_mtx  <- heatmap.2(as.matrix(gene_df))
-      gene_peptides       <- row.names(gene_df)
-      gene_peptides_order <- gene_peptides[gene_hp_mtx$rowInd]
+      par(mar=c(1,1,1,1))
+
+      # hierarchical clustering of peptide IDs
+      gene_mtx <- as.matrix(gene_df)
+      d        <- dist(gene_mtx)
+      hc       <- hclust(d)
+      gene_peptides_order <- rownames(gene_mtx)[hc$order]
+
+      # heatmap.2 way
+      #gene_hp_mtx  <- heatmap.2(as.matrix(gene_df))
+      #gene_peptides       <- row.names(gene_df)
+      #gene_peptides_order <- gene_peptides[gene_hp_mtx$rowInd]
     }
 
     gene_list_ordered <- c(gene_list_ordered,gene_peptides_order)
@@ -293,6 +304,17 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
                 annotation_legend = F,annotation_names_col = F, annotation_names_row = F,annotation_colors = anno_colors,
                 gaps_col = c(gap1,gap2,gap3),cellheight = cell.height, cellwidth = cell.width,
                 border_color = NA,labels_row = cust_labels_row)
+
+  if (transpose.heatmap == TRUE){
+    df_fmt_inv <- as.data.frame(t(df_fmt))
+    gene_names <- tstrsplit(names(df_fmt_inv),"_")[[1]]
+    p <- pheatmap(df_fmt_inv,cluster_cols = F, cluster_rows = F,
+                  color = color_pal,breaks = break_list,fontsize_row = 4.5,
+                  annotation_col = genes_annot, annotation_row = diagnosis_annot,
+                  annotation_legend = F,annotation_names_col = F, annotation_names_row = F,annotation_colors = anno_colors,
+                  gaps_row = c(gap1,gap2,gap3),cellheight = cell.height, cellwidth = cell.width,
+                  border_color = NA,labels_col = gene_names)
+  }
 
   return(p)
 }

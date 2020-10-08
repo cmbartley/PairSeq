@@ -23,7 +23,8 @@ makeHeatmap(
   cell.height = 5,
   cell.width = 5,
   num.pos.controls = 1,
-  null.ip.col = "Bead"
+  null.ip.col = "Bead",
+  transpose.heatmap = FALSE
 )
 }
 \arguments{
@@ -54,6 +55,8 @@ makeHeatmap(
 \item{gene.order}{Vector of gene names to force the order in which peptides are displayed in the heatmap <default: c()>}
 
 \item{avg.non.target.columns}{Average the replicates for all samples that are not in target.samples <default: FALSE>}
+
+\item{transpose.heatmap}{option to transpose the heatmaps columns and rows <default: FALSE>}
 }
 \value{
 variable containing resulting heatmap.
