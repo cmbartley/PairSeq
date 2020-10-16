@@ -60,17 +60,18 @@ findKmerOverlap <- function(peptide_df, KMER_SIZE = 7, TEMP_FASTA = "./temp_pep.
 #' @examples findKmerOverlap.old(peptide_df,KMER_SIZE = 7)
 #' @export
 
-findKmerOverlap.old <- function(peptide_df, KMER_SIZE = 7){
+findKmerOverlap.old <- function(peptide_df, KMER_SIZE = 7,peptide.id.col = "peptide_id",sequence.col = "sequence"){
   # Initialize list of Kmers
-  kmer_list         <- list()
-  overlapping_kmers <- c()
-  peptides_to_keep  <- c()
+  kmer_list          <- list()
+  overlap_count_list <- list()
+  overlapping_kmers  <- c()
+  peptides_to_keep   <- c()
 
 
   for(i in 1:nrow(peptide_df)){
     row <- peptide_df[i,]
-    pep <- row$peptide_id
-    seq <- unlist(strsplit(row$sequence,""))
+    pep <- row[,peptide.id.col]
+    seq <- unlist(strsplit(row[,sequence.col],""))
 
     end_pos <- length(seq) - KMER_SIZE + 1
     for(i in 1:end_pos){
@@ -100,11 +101,28 @@ findKmerOverlap.old <- function(peptide_df, KMER_SIZE = 7){
   kmer_list_overlap <- kmer_list[overlapping_kmers]
 
   # Add column for Kmer overlap
-  kmer_overlap_col <- peptide_df$peptide_id
-  kmer_overlap_col[kmer_overlap_col %in% peptides_to_keep] <- "yes"
-  kmer_overlap_col[! kmer_overlap_col %in% "yes"]          <- "no"
+  kmer_overlap_col <- peptide_df[,peptide.id.col]
 
-  peptide_df$KmerOverlap <- kmer_overlap_col
+  # Determine number of Kmer overlaps
+  for (kmer in names(kmer_list_overlap)){
+    peptide_vec <- kmer_list_overlap[[kmer]]
+    for (pep in peptide_vec){
+      if (pep %in% names(overlap_count_list)){
+        current                   <- overlap_count_list[[pep]]
+        overlap_count_list[[pep]] <- unique(c(current,kmer))
+      } else{
+        overlap_count_list[[pep]] <- kmer
+      }
+    }
+  }
+  overlap_count_list <- unlist(lapply(overlap_count_list, length))
+
+  kmer_overlap_col[! kmer_overlap_col %in% names(overlap_count_list)] <- 0
+  kmer_overlap_col[kmer_overlap_col %in% names(overlap_count_list)] <- overlap_count_list
+
+
+  peptide_df$KmerOverlap <- as.numeric(kmer_overlap_col)
+
   #peptide_df_clean <- peptide_df[peptide_df$peptide_id %in% peptides_to_keep,]
 
   return(peptide_df)
