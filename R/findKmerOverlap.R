@@ -56,6 +56,8 @@ findKmerOverlap <- function(peptide_df, KMER_SIZE = 7, TEMP_FASTA = "./temp_pep.
 #' then returns a subset of phage results with peptides that contain overlaps
 #' @param peptide_df phage peptide count matrix
 #' @param KMER_SIZE size of Kmer <default: 7>
+#' @param sequence.col column name for peptide AA sequences in input data frame <default: "sequence">
+#' @param peptide.id.col column name for peptide IDs in input data frame <default: "peptide_id">
 #' @return returns phage results with a 'KmerOverlap' column saying whether peptides that contain Kmer overlaps with a 'yes' or 'no'.
 #' @examples findKmerOverlap.old(peptide_df,KMER_SIZE = 7)
 #' @export

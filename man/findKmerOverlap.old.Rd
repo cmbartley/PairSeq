@@ -4,12 +4,21 @@
 \alias{findKmerOverlap.old}
 \title{Identify Kmer overlaps}
 \usage{
-findKmerOverlap.old(peptide_df, KMER_SIZE = 7)
+findKmerOverlap.old(
+  peptide_df,
+  KMER_SIZE = 7,
+  peptide.id.col = "peptide_id",
+  sequence.col = "sequence"
+)
 }
 \arguments{
 \item{peptide_df}{phage peptide count matrix}
 
 \item{KMER_SIZE}{size of Kmer <default: 7>}
+
+\item{peptide.id.col}{column name for peptide IDs in input data frame <default: "peptide_id">}
+
+\item{sequence.col}{column name for peptide AA sequences in input data frame <default: "sequence">}
 }
 \value{
 returns phage results with a 'KmerOverlap' column saying whether peptides that contain Kmer overlaps with a 'yes' or 'no'.
