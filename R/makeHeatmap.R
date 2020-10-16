@@ -196,8 +196,9 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
 
   # Re-order columns incase disease needs to be towards the right
   if(disease.first != TRUE){
-    ref_no_bead <- reference.samples.rem.order[! reference.samples.rem.order %in% null.ip.col]
-    reordered_cols <- c(target.samples,ref_no_bead,disease.samples.rem.order,null.ip.col)
+    beads <- reference.samples.rem.order[grep(null.ip.col,reference.samples.rem.order)]
+    ref_no_bead <- reference.samples.rem.order[! reference.samples.rem.order %in% beads]
+    reordered_cols <- c(target.samples,ref_no_bead,disease.samples.rem.order,beads)
 
     df_fmt <- df_fmt[,reordered_cols]
   }
@@ -369,7 +370,7 @@ avgReplicates <- function(df,target.samples,disease.samples,reference.samples,ch
 collapseReplicateColumnNames <- function(col.name.vec,chop.length = 2) {
   for (i in 1:length(col.name.vec)) {
     sample               <- col.name.vec[i]
-    if (grepl("Bead_",sample)){
+    if (grepl("Bead_|GFAP_",sample)){
       col.name.vec[i] <- tstrsplit(sample,"_")[[1]]
     } else{
       col.name.vec[i] <- substr(sample,1,nchar(sample)-chop.length)
