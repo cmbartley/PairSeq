@@ -66,8 +66,10 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
     return(sample.vec.order)
   }
 
-  disease.samples.rem.order   <- unique(orderSamples(disease.samples.rem))
-  reference.samples.rem.order <- unique(orderSamples(reference.samples.rem))
+  disease.samples.rem.order   <- c()
+  if (length(disease.samples.rem) > 0) {disease.samples.rem.order   <- unique(orderSamples(disease.samples.rem))}
+  reference.samples.rem.order <- c()
+  if (length(reference.samples.rem) > 0) {reference.samples.rem.order <- unique(orderSamples(reference.samples.rem))}
 
   df <- df[,c(target.samples,disease.samples.rem.order,reference.samples.rem.order)]
 
@@ -79,8 +81,8 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
     disease.samples   <- collapseReplicateColumnNames(disease.samples)
     reference.samples <- collapseReplicateColumnNames(reference.samples)
 
-    disease.samples.rem.order   <- collapseReplicateColumnNames(disease.samples.rem.order)
-    reference.samples.rem.order <- collapseReplicateColumnNames(reference.samples.rem.order)
+    if(length(disease.samples.rem.order) > 0){disease.samples.rem.order   <- collapseReplicateColumnNames(disease.samples.rem.order)}
+    if (length(reference.samples.rem.order) > 0){reference.samples.rem.order <- collapseReplicateColumnNames(reference.samples.rem.order)}
   }
 
 
@@ -282,10 +284,23 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
 
   # Create annotation color list
   anno_colors <- list(diagnosis = colcolor,genes_vec = rowcolor)
-  gap1 <- length(target.samples)
-  gap2 <- length(c(target.samples,disease.samples.rem.order))
-  if(disease.first != TRUE){gap2 <- length(c(target.samples,reference.samples.rem.order)) - num.pos.controls}
+
+  # Column Gaps
+  col_gaps <- c()
+  gap1     <- length(target.samples)
+  col_gaps <- c(col_gaps,gap1)
+
+  if(disease.first == TRUE){
+    gap2 <- length(c(target.samples,disease.samples.rem.order))
+    if (length(disease.samples.rem.order)>0){col_gaps <- c(col_gaps,gap2)}
+  }
+  if(disease.first != TRUE){
+    gap2 <- length(c(target.samples,reference.samples.rem.order)) - num.pos.controls
+    if (length(reference.samples.rem.order)>0){col_gaps <- c(col_gaps,gap2)}
+  }
+
   gap3 <- length(names(df_fmt)) - num.pos.controls
+  col_gaps <- c(col_gaps,gap3)
 
   # Custom Row names
   cust_labels_row <- row.names(df_fmt)
@@ -303,7 +318,7 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
                 color = color_pal,breaks = break_list,fontsize_row = 4.5,
                 annotation_col = diagnosis_annot, annotation_row = genes_annot,
                 annotation_legend = F,annotation_names_col = F, annotation_names_row = F,annotation_colors = anno_colors,
-                gaps_col = c(gap1,gap2,gap3),cellheight = cell.height, cellwidth = cell.width,
+                gaps_col = col_gaps,cellheight = cell.height, cellwidth = cell.width,
                 border_color = NA,labels_row = cust_labels_row)
 
   if (transpose.heatmap == TRUE){
