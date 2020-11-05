@@ -16,6 +16,7 @@
 #' @param gene.order Vector of gene names to force the order in which peptides are displayed in the heatmap <default: c()>
 #' @param avg.non.target.columns Average the replicates for all samples that are not in target.samples <default: FALSE>
 #' @param transpose.heatmap option to transpose the heatmaps columns and rows <default: FALSE>
+#' @param custom.gene.labels option to change row labels to gene names only labeled once per gene block <default: TRUE>
 #' @return variable containing resulting heatmap.
 #' @examples makeHeatmap(df,patient,target.samples,disease.samples,reference.samples)
 #' @import pheatmap
@@ -27,7 +28,8 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
                         disease.samples,reference.samples, normalization.method = "log10",
                         disease.annot = "COVID-19+",reference.annot = "REFERENCE",min.rpk = 0,
                         break.list = NULL, gene.order = c(),avg.non.target.columns = FALSE,disease.first = TRUE,
-                        cell.height=5,cell.width=5, num.pos.controls = 1,null.ip.col = "Bead",transpose.heatmap=FALSE) {
+                        cell.height=5,cell.width=5, num.pos.controls = 1,null.ip.col = "Bead",transpose.heatmap=FALSE,
+                        custom.gene.labels=TRUE) {
   # Set the margins for heatmaps
   par(mar=c(1,1,1,1))
 
@@ -314,12 +316,15 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
     cust_labels_row[cust_labels_row %in% gene] <- gene_sub
   }
 
+  label_row <- NULL
+  if(custom.gene.labels == TRUE){label_row <- cust_labels_row}
+
   p <- pheatmap(df_fmt,cluster_cols = F, cluster_rows = F,
                 color = color_pal,breaks = break_list,fontsize_row = 4.5,
                 annotation_col = diagnosis_annot, annotation_row = genes_annot,
                 annotation_legend = F,annotation_names_col = F, annotation_names_row = F,annotation_colors = anno_colors,
                 gaps_col = col_gaps,cellheight = cell.height, cellwidth = cell.width,
-                border_color = NA,labels_row = cust_labels_row)
+                border_color = NA,labels_row = label_row)
 
   if (transpose.heatmap == TRUE){
     df_fmt_inv <- as.data.frame(t(df_fmt))

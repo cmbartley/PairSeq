@@ -58,14 +58,15 @@ findKmerOverlap <- function(peptide_df, KMER_SIZE = 7, TEMP_FASTA = "./temp_pep.
 #' @param KMER_SIZE size of Kmer <default: 7>
 #' @param sequence.col column name for peptide AA sequences in input data frame <default: "sequence">
 #' @param peptide.id.col column name for peptide IDs in input data frame <default: "peptide_id">
-#' @return returns phage results with a 'KmerOverlap' column saying whether peptides that contain Kmer overlaps with a 'yes' or 'no'.
+#' @return returns phage results with a 'KmerOverlap' column quantifying the number of Kmer overlaps. In addition, a 'PeptideOverlap' column with the number of peptide overlaps.
 #' @examples findKmerOverlap.old(peptide_df,KMER_SIZE = 7)
 #' @export
 
 findKmerOverlap.old <- function(peptide_df, KMER_SIZE = 7,peptide.id.col = "peptide_id",sequence.col = "sequence"){
   # Initialize list of Kmers
-  kmer_list          <- list()
-  overlap_count_list <- list()
+  kmer_list              <- list()
+  overlap_count_list     <- list()
+  pep_overlap_count_list <- list()
   overlapping_kmers  <- c()
   peptides_to_keep   <- c()
 
@@ -104,26 +105,42 @@ findKmerOverlap.old <- function(peptide_df, KMER_SIZE = 7,peptide.id.col = "pept
 
   # Add column for Kmer overlap
   kmer_overlap_col <- peptide_df[,peptide.id.col]
+  pep_overlap_col  <- peptide_df[,peptide.id.col]
 
   # Determine number of Kmer overlaps
   for (kmer in names(kmer_list_overlap)){
     peptide_vec <- kmer_list_overlap[[kmer]]
     for (pep in peptide_vec){
+      peptide_interac <- peptide_vec[! peptide_vec %in% pep]
       if (pep %in% names(overlap_count_list)){
         current                   <- overlap_count_list[[pep]]
         overlap_count_list[[pep]] <- unique(c(current,kmer))
+        if (length(peptide_interac) > 0){
+          current                   <- pep_overlap_count_list[[pep]]
+          pep_overlap_count_list[[pep]] <- unique(c(current,peptide_interac))
+        }
       } else{
         overlap_count_list[[pep]] <- kmer
+        if (length(peptide_interac) > 0){
+          pep_overlap_count_list[[pep]] <- peptide_interac
+        }
       }
     }
   }
-  overlap_count_list <- unlist(lapply(overlap_count_list, length))
 
+  # Kmer Overlap count
+  overlap_count_list <- unlist(lapply(overlap_count_list, length))
   kmer_overlap_col[! kmer_overlap_col %in% names(overlap_count_list)] <- 0
   kmer_overlap_col[kmer_overlap_col %in% names(overlap_count_list)] <- overlap_count_list
 
-
   peptide_df$KmerOverlap <- as.numeric(kmer_overlap_col)
+
+  # Peptide overlap count column
+  overlap_pep_count_list <- unlist(lapply(pep_overlap_count_list, length))
+  pep_overlap_col[! pep_overlap_col %in% names(overlap_pep_count_list)] <- 0
+  pep_overlap_col[pep_overlap_col %in% names(overlap_pep_count_list)] <- overlap_pep_count_list
+
+  peptide_df$PeptideOverlap <- as.numeric(pep_overlap_col)
 
   #peptide_df_clean <- peptide_df[peptide_df$peptide_id %in% peptides_to_keep,]
 
