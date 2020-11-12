@@ -21,7 +21,7 @@ findKmerOverlap.old(
 \item{sequence.col}{column name for peptide AA sequences in input data frame <default: "sequence">}
 }
 \value{
-returns phage results with a 'KmerOverlap' column saying whether peptides that contain Kmer overlaps with a 'yes' or 'no'.
+returns phage results with a 'KmerOverlap' column quantifying the number of Kmer overlaps. In addition, a 'PeptideOverlap' column with the number of peptide overlaps.
 }
 \description{
 takes input of phage results and finds all Kmer overlaps among all peptide sequences

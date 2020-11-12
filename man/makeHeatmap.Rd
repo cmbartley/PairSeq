@@ -24,7 +24,8 @@ makeHeatmap(
   cell.width = 5,
   num.pos.controls = 1,
   null.ip.col = "Bead",
-  transpose.heatmap = FALSE
+  transpose.heatmap = FALSE,
+  custom.gene.labels = TRUE
 )
 }
 \arguments{
@@ -57,6 +58,8 @@ makeHeatmap(
 \item{avg.non.target.columns}{Average the replicates for all samples that are not in target.samples <default: FALSE>}
 
 \item{transpose.heatmap}{option to transpose the heatmaps columns and rows <default: FALSE>}
+
+\item{custom.gene.labels}{option to change row labels to gene names only labeled once per gene block <default: TRUE>}
 }
 \value{
 variable containing resulting heatmap.

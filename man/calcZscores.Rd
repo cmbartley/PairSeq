@@ -4,25 +4,18 @@
 \alias{calcZscores}
 \title{Creates Z-score Columns}
 \usage{
-calcZscores(
-  df,
-  target.samples,
-  method = "median",
-  MIN = 1,
-  peptide.id.col = "peptide_id",
-  onlyZscores = FALSE
-)
+calcZscores(df, target.samples, reference.samples, method = "mean", MIN = 1)
 }
 \arguments{
 \item{df}{phage peptide count matrix}
 
-\item{method}{method to use for calculating Z-scores ("median","mean") <default: "median">}
+\item{target.samples}{vector of target samples to analyze}
+
+\item{reference.samples}{vector of reference control samples used for calculating Std. Dev. and average expression}
+
+\item{method}{method to use for calculating Z-scores ("median","mean") <default: "mean">}
 
 \item{MIN}{minimum count value for the inputted data frame <default: 1>}
-
-\item{onlyZscores}{option to format the output and return full data frame or only the Z-score columns <default: FALSE>}
-
-\item{target.columns}{list of target samples to analyze}
 }
 \value{
 returns phage results with FC columns for each target sample.
