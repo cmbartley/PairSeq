@@ -16,7 +16,7 @@ calcZscores <- function(df, target.samples, reference.samples, method = "mean", 
   peptide_df <- df[,unique(c(target.samples,reference.samples))]
 
   # calc Std dev per row
-  ref_df <- df[,unique(c(reference.samples))]
+  ref_df <- peptide_df[,unique(c(reference.samples))]
   ref_df <- transform(ref_df, SD=apply(ref_df,1, sd, na.rm = F))
   peptide_df$SD <- ref_df$SD
 
