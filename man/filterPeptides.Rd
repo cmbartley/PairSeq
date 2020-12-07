@@ -9,6 +9,7 @@ filterPeptides(
   list_of_samples,
   RPK_THRESH = 20,
   FC_THRESH = 100,
+  ZSCORE_THRESH = 0,
   peptide.id.col = "peptide_id"
 )
 }
@@ -20,6 +21,8 @@ filterPeptides(
 \item{RPK_THRESH}{RPK threshold <default: 20>}
 
 \item{FC_THRESH}{Fold Change threshold <default: 100>}
+
+\item{ZSCORE_THRESH}{If calculated, applies minimum Z-score threshold for each peptide <default: 0>}
 
 \item{peptide.id.col}{Name of column with unique Peptide ID <default: "peptide_id">}
 }
