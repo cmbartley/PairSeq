@@ -7,12 +7,13 @@
 #' @param FC_THRESH1 Fold Change threshold 1 <default: 10>
 #' @param FC_THRESH2 Fold Change threshold 2 <default: 100>
 #' @param SUM_RPK_THRESH Gene level total RPK threshold <default: 50>
-#' @param ZSCORE_THRESH If calculated, applies minimum Z-score threshold for each peptide <default: 0>
+#' @param ZSCORE_THRESH1 If calculated, applies minimum Z-score threshold for each peptide <default: 0>
+#' @param ZSCORE_THRESH2 If calculated, applies additional Z-score threshold similar to the FC_THRESH2 arguement <default: 0>
 #' @return returns a subset of phage results with peptides that pass all filters.
 #' @examples fullParse(df,list_of_samples, MIN_RPK = 2,FC_THRESH1 = 10, FC_THRESH2 = 100, SUM_RPK_THRESH = 50)
 #' @export
 
-fullParse <- function(df,list_of_samples, MIN_RPK = 0,FC_THRESH1 = 10, FC_THRESH2 = 100, SUM_RPK_THRESH = 50, ZSCORE_THRESH = 0){
+fullParse <- function(df,list_of_samples, MIN_RPK = 0,FC_THRESH1 = 10, FC_THRESH2 = 100, SUM_RPK_THRESH = 50, ZSCORE_THRESH1 = 0, ZSCORE_THRESH2 = 0){
         candidate_peptides <- c()
 
         for(samp in list_of_samples){
@@ -22,13 +23,16 @@ fullParse <- function(df,list_of_samples, MIN_RPK = 0,FC_THRESH1 = 10, FC_THRESH
 
                 #create sample-specific dataframe of minimum rpK >= 2,  minimum FC >= 10 and minium Z-score threshold
                 df_2rpK      <- subset(df, df[,samp] >= MIN_RPK)
-                if(ZSCORE_THRESH != 0){
-                  df_2rpk      <- subset(df_2rpK, df_2rpK[,samp_z] >= ZSCORE_THRESH)
+                if(ZSCORE_THRESH1 != 0){
+                  df_2rpk      <- subset(df_2rpK, df_2rpK[,samp_z] >= ZSCORE_THRESH1)
                 }
                 df_2rpK_FC10 <- subset(df_2rpK, df_2rpK[,samp_fc] >= FC_THRESH1)
 
                 #create separate sample-specific dataframe of minimum rpK >= 2 and minimum FC >= 100
                 df_2rpK_FC10_FC100 <- subset(df_2rpK_FC10, df_2rpK_FC10[,samp_fc] >= FC_THRESH2)
+                if(ZSCORE_THRESH2 != 0){
+                  ddf_2rpK_FC10_FC100 <- subset(df_2rpK_FC10_FC100, df_2rpK_FC10_FC100[,samp_z] >= ZSCORE_THRESH2)
+                }
 
                 #expand FC100 dataframe to include FC >= 10 phage that mapt to same genes as FC >= 100 phage (goal to identifying overlapping, enriched phage)
                 df_extended <- df_2rpK_FC10[which(df_2rpK_FC10$gene %in% df_2rpK_FC10_FC100$gene),]
@@ -45,7 +49,11 @@ fullParse <- function(df,list_of_samples, MIN_RPK = 0,FC_THRESH1 = 10, FC_THRESH
                     # Verify at least one peptide has a FC greater than the 2nd threshold
                     if (nrow(df_get_50rpK) > 1){
                       peptide_fc_vec <- df_get_50rpK[,samp_fc]
-                      sig_fc         <- peptide_fc_vec[peptide_fc_vec > FC_THRESH2]
+                      sig_fc         <- peptide_fc_vec[peptide_fc_vec >= FC_THRESH2]
+                      if (ZSCORE_THRESH2 != 0){
+                        peptide_fc_vec <- df_get_50rpK[,samp_z]
+                        sig_fc         <- peptide_fc_vec[peptide_fc_vec >= ZSCORE_THRESH2]
+                      }
 
                       ## Significant peptide candidates
                       if (length(sig_fc) > 0){
