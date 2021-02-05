@@ -57,6 +57,16 @@ makeHeatmap(
 
 \item{avg.non.target.columns}{Average the replicates for all samples that are not in target.samples <default: FALSE>}
 
+\item{disease.first}{option for where disease group apears first on the heatmap <default: TRUE>}
+
+\item{cell.height}{option for cell height in heatmap <default: 5>}
+
+\item{cell.width}{option for cell width in heatmap <default: 5>}
+
+\item{num.pos.controls}{option to indicate number of AG Bead controls in the data frame, if you are averaging replicates, keep this number at 1 <default: 1>}
+
+\item{null.ip.col}{option that indicates a regex to group all AG Bead columns <default: Bead >}
+
 \item{transpose.heatmap}{option to transpose the heatmaps columns and rows <default: FALSE>}
 
 \item{custom.gene.labels}{option to change row labels to gene names only labeled once per gene block <default: TRUE>}

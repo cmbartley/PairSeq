@@ -9,7 +9,8 @@ avgReplicates(
   target.samples,
   disease.samples,
   reference.samples,
-  chop.length = 2
+  chop.length = 2,
+  null.ip.col = "Bead"
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ avgReplicates(
 \item{reference.samples}{vector of all reference samples (healthy and bead controls) in input data frame}
 
 \item{chop.length}{number characters to remove from the end of each sample name to remove the replicate IDs <default: 2>}
+
+\item{null.ip.col}{option that indicates a regex to group all AG Bead columns <default: Bead >}
 }
 \value{
 data frame with non-target columns averaged

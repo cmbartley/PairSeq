@@ -11,7 +11,8 @@ fullParse(
   FC_THRESH1 = 10,
   FC_THRESH2 = 100,
   SUM_RPK_THRESH = 50,
-  ZSCORE_THRESH = 0
+  ZSCORE_THRESH1 = 0,
+  ZSCORE_THRESH2 = 0
 )
 }
 \arguments{
@@ -27,7 +28,9 @@ fullParse(
 
 \item{SUM_RPK_THRESH}{Gene level total RPK threshold <default: 50>}
 
-\item{ZSCORE_THRESH}{If calculated, applies minimum Z-score threshold for each peptide <default: 0>}
+\item{ZSCORE_THRESH1}{If calculated, applies minimum Z-score threshold for each peptide <default: 0>}
+
+\item{ZSCORE_THRESH2}{If calculated, applies additional Z-score threshold similar to the FC_THRESH2 arguement <default: 0>}
 }
 \value{
 returns a subset of phage results with peptides that pass all filters.

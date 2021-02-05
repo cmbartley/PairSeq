@@ -4,12 +4,18 @@
 \alias{collapseReplicateColumnNames}
 \title{Format Column names to remove replicate IDs}
 \usage{
-collapseReplicateColumnNames(col.name.vec, chop.length = 2)
+collapseReplicateColumnNames(
+  col.name.vec,
+  chop.length = 2,
+  null.ip.col = "Bead"
+)
 }
 \arguments{
 \item{col.name.vec}{input column names, sample names only}
 
 \item{chop.length}{number of characters to chop from the end of each sample name <default: 2>}
+
+\item{null.ip.col}{option that indicates a regex to group all AG Bead columns <default: Bead >}
 }
 \value{
 vector of unique collapsed sample names
