@@ -15,6 +15,11 @@
 #' @param break.list This determines the margins for the resultsing heatmap. the only options are (1,2,3,4) <default: NULL>
 #' @param gene.order Vector of gene names to force the order in which peptides are displayed in the heatmap <default: c()>
 #' @param avg.non.target.columns Average the replicates for all samples that are not in target.samples <default: FALSE>
+#' @param disease.first option for where disease group apears first on the heatmap <default: TRUE>
+#' @param cell.height option for cell height in heatmap <default: 5>
+#' @param cell.width option for cell width in heatmap <default: 5>
+#' @param num.pos.controls option to indicate number of AG Bead controls in the data frame, if you are averaging replicates, keep this number at 1 <default: 1>
+#' @param null.ip.col option that indicates a regex to group all AG Bead columns <default: Bead >
 #' @param transpose.heatmap option to transpose the heatmaps columns and rows <default: FALSE>
 #' @param custom.gene.labels option to change row labels to gene names only labeled once per gene block <default: TRUE>
 #' @return variable containing resulting heatmap.
@@ -49,9 +54,11 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
     for (i in 1:length(sample.vec)) {
       sample <- sample.vec[i]
       name  <- ""
-      if(grepl("Bead|GFAP",sample)){
+      if(grepl(null.ip.col,sample)){
         name <- unlist(strsplit(sample,"_"))[1]
-      }else{
+      } else if (grepl("GFAP",sample)){
+        name <- unlist(strsplit(sample,"_"))[1]
+      } else{
         name_comp <- unlist(strsplit(sample,"_"))
         name <- paste(name_comp[2:(length(name_comp)-1)],collapse = "_")
       }
@@ -79,12 +86,12 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
   disease.samples.orig   <- disease.samples
   reference.samples.orig <- reference.samples
   if (avg.non.target.columns == TRUE){
-    df <- avgReplicates(df,target.samples,disease.samples,reference.samples)
-    disease.samples   <- collapseReplicateColumnNames(disease.samples)
-    reference.samples <- collapseReplicateColumnNames(reference.samples)
+    df <- avgReplicates(df,target.samples,disease.samples,reference.samples, null.ip.col = null.ip.col)
+    disease.samples   <- collapseReplicateColumnNames(disease.samples, null.ip.col=null.ip.col)
+    reference.samples <- collapseReplicateColumnNames(reference.samples, null.ip.col=null.ip.col)
 
-    if(length(disease.samples.rem.order) > 0){disease.samples.rem.order   <- collapseReplicateColumnNames(disease.samples.rem.order)}
-    if (length(reference.samples.rem.order) > 0){reference.samples.rem.order <- collapseReplicateColumnNames(reference.samples.rem.order)}
+    if(length(disease.samples.rem.order) > 0){disease.samples.rem.order   <- collapseReplicateColumnNames(disease.samples.rem.order,null.ip.col=null.ip.col)}
+    if (length(reference.samples.rem.order) > 0){reference.samples.rem.order <- collapseReplicateColumnNames(reference.samples.rem.order,null.ip.col=null.ip.col)}
   }
 
 
@@ -349,16 +356,17 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
 #' @param disease.samples vector of all disease samples in input data frame
 #' @param reference.samples vector of all reference samples (healthy and bead controls) in input data frame
 #' @param chop.length number characters to remove from the end of each sample name to remove the replicate IDs <default: 2>
+#' @param null.ip.col option that indicates a regex to group all AG Bead columns <default: Bead >
 #' @return data frame with non-target columns averaged
 #' @examples avgReplicates(df,target.samples,disease.samples,reference.samples)
 #' @import data.table
 #' @export
-avgReplicates <- function(df,target.samples,disease.samples,reference.samples,chop.length=2) {
+avgReplicates <- function(df,target.samples,disease.samples,reference.samples,chop.length=2, null.ip.col = "Bead") {
   df_avg <- df[,target.samples]
 
   # Format new sample names
   other.samples     <- names(df)[! names(df) %in% target.samples]
-  other.samples.fmt <- collapseReplicateColumnNames(other.samples,chop.length)
+  other.samples.fmt <- collapseReplicateColumnNames(other.samples,chop.length, null.ip.col=null.ip.col)
 
   for (sample in other.samples.fmt) {
     sample_reps       <- names(df)[grep(sample,names(df))]
@@ -384,13 +392,16 @@ avgReplicates <- function(df,target.samples,disease.samples,reference.samples,ch
 #' @description take an input vector of sample names and collapse all replicates
 #' @param col.name.vec input column names, sample names only
 #' @param chop.length number of characters to chop from the end of each sample name <default: 2>
+#' @param null.ip.col option that indicates a regex to group all AG Bead columns <default: Bead >
 #' @return vector of unique collapsed sample names
 #' @examples collapseReplicateColumnNames(col.name.vec,chop.length = 2)
 #' @import data.table
-collapseReplicateColumnNames <- function(col.name.vec,chop.length = 2) {
+collapseReplicateColumnNames <- function(col.name.vec,chop.length = 2,null.ip.col = "Bead") {
   for (i in 1:length(col.name.vec)) {
     sample               <- col.name.vec[i]
-    if (grepl("Bead_|GFAP_",sample)){
+    if (grepl(null.ip.col,sample)){
+      col.name.vec[i] <- tstrsplit(sample,"_")[[1]]
+    } else if (grepl("GFAP_",sample)){
       col.name.vec[i] <- tstrsplit(sample,"_")[[1]]
     } else{
       col.name.vec[i] <- substr(sample,1,nchar(sample)-chop.length)
