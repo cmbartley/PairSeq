@@ -34,7 +34,7 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
                         disease.annot = "COVID-19+",reference.annot = "REFERENCE",min.rpk = 0,
                         break.list = NULL, gene.order = c(),avg.non.target.columns = FALSE,disease.first = TRUE,
                         cell.height=5,cell.width=5, num.pos.controls = 1,null.ip.col = "Bead",transpose.heatmap=FALSE,
-                        custom.gene.labels=TRUE) {
+                        custom.gene.labels=TRUE,split.by = NULL) {
   # Set the margins for heatmaps
   par(mar=c(1,1,1,1))
 
@@ -86,9 +86,9 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
   disease.samples.orig   <- disease.samples
   reference.samples.orig <- reference.samples
   if (avg.non.target.columns == TRUE){
-    df <- avgReplicates(df,target.samples,disease.samples,reference.samples, null.ip.col = null.ip.col)
-    disease.samples   <- collapseReplicateColumnNames(disease.samples, null.ip.col=null.ip.col)
-    reference.samples <- collapseReplicateColumnNames(reference.samples, null.ip.col=null.ip.col)
+    df <- avgReplicates(df,target.samples,disease.samples,reference.samples, null.ip.col = null.ip.col,split.by = split.by)
+    disease.samples   <- collapseReplicateColumnNames(disease.samples, null.ip.col=null.ip.col,split.by = split.by)
+    reference.samples <- collapseReplicateColumnNames(reference.samples, null.ip.col=null.ip.col,split.by = split.by)
 
     if(length(disease.samples.rem.order) > 0){disease.samples.rem.order   <- collapseReplicateColumnNames(disease.samples.rem.order,null.ip.col=null.ip.col)}
     if (length(reference.samples.rem.order) > 0){reference.samples.rem.order <- collapseReplicateColumnNames(reference.samples.rem.order,null.ip.col=null.ip.col)}
@@ -361,12 +361,12 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
 #' @examples avgReplicates(df,target.samples,disease.samples,reference.samples)
 #' @import data.table
 #' @export
-avgReplicates <- function(df,target.samples,disease.samples,reference.samples,chop.length=2, null.ip.col = "Bead") {
+avgReplicates <- function(df,target.samples,disease.samples,reference.samples,chop.length=2, null.ip.col = "Bead",split.by = NULL) {
   df_avg <- df[,target.samples]
 
   # Format new sample names
   other.samples     <- names(df)[! names(df) %in% target.samples]
-  other.samples.fmt <- collapseReplicateColumnNames(other.samples,chop.length, null.ip.col=null.ip.col)
+  other.samples.fmt <- collapseReplicateColumnNames(other.samples,chop.length, null.ip.col=null.ip.col,split.by=split.by)
 
   for (sample in other.samples.fmt) {
     sample_reps       <- names(df)[grep(sample,names(df))]
@@ -396,7 +396,7 @@ avgReplicates <- function(df,target.samples,disease.samples,reference.samples,ch
 #' @return vector of unique collapsed sample names
 #' @examples collapseReplicateColumnNames(col.name.vec,chop.length = 2)
 #' @import data.table
-collapseReplicateColumnNames <- function(col.name.vec,chop.length = 2,null.ip.col = "Bead") {
+collapseReplicateColumnNames <- function(col.name.vec,chop.length = 2,null.ip.col = "Bead",split.by = NULL) {
   for (i in 1:length(col.name.vec)) {
     sample               <- col.name.vec[i]
     if (grepl(null.ip.col,sample)){
@@ -404,6 +404,9 @@ collapseReplicateColumnNames <- function(col.name.vec,chop.length = 2,null.ip.co
     } else if (grepl("GFAP_",sample)){
       col.name.vec[i] <- tstrsplit(sample,"_")[[1]]
     } else{
+      if(!is.null(split.by)){
+        sample <- tstrsplit(sample,split.by)[[1]]
+      }
       col.name.vec[i] <- substr(sample,1,nchar(sample)-chop.length)
     }
 
