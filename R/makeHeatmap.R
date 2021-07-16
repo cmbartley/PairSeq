@@ -22,6 +22,7 @@
 #' @param null.ip.col option that indicates a regex to group all AG Bead columns <default: Bead >
 #' @param transpose.heatmap option to transpose the heatmaps columns and rows <default: FALSE>
 #' @param custom.gene.labels option to change row labels to gene names only labeled once per gene block <default: TRUE>
+#' @param split.by insert regex to split sample strings by and keep the first element, which helps simplify complex sample names <default: NULL>
 #' @return variable containing resulting heatmap.
 #' @examples makeHeatmap(df,patient,target.samples,disease.samples,reference.samples)
 #' @import pheatmap
@@ -356,6 +357,7 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
 #' @param disease.samples vector of all disease samples in input data frame
 #' @param reference.samples vector of all reference samples (healthy and bead controls) in input data frame
 #' @param chop.length number characters to remove from the end of each sample name to remove the replicate IDs <default: 2>
+#' @param split.by insert regex to split sample strings by and keep the first element, which helps simplify complex sample names <default: NULL>
 #' @param null.ip.col option that indicates a regex to group all AG Bead columns <default: Bead >
 #' @return data frame with non-target columns averaged
 #' @examples avgReplicates(df,target.samples,disease.samples,reference.samples)
@@ -392,6 +394,7 @@ avgReplicates <- function(df,target.samples,disease.samples,reference.samples,ch
 #' @description take an input vector of sample names and collapse all replicates
 #' @param col.name.vec input column names, sample names only
 #' @param chop.length number of characters to chop from the end of each sample name <default: 2>
+#' @param split.by insert regex to split sample strings by and keep the first element, which helps simplify complex sample names <default: NULL>
 #' @param null.ip.col option that indicates a regex to group all AG Bead columns <default: Bead >
 #' @return vector of unique collapsed sample names
 #' @examples collapseReplicateColumnNames(col.name.vec,chop.length = 2)

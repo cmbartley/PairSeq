@@ -25,7 +25,8 @@ makeHeatmap(
   num.pos.controls = 1,
   null.ip.col = "Bead",
   transpose.heatmap = FALSE,
-  custom.gene.labels = TRUE
+  custom.gene.labels = TRUE,
+  split.by = NULL
 )
 }
 \arguments{
@@ -70,6 +71,8 @@ makeHeatmap(
 \item{transpose.heatmap}{option to transpose the heatmaps columns and rows <default: FALSE>}
 
 \item{custom.gene.labels}{option to change row labels to gene names only labeled once per gene block <default: TRUE>}
+
+\item{split.by}{insert regex to split sample strings by and keep the first element, which helps simplify complex sample names <default: NULL>}
 }
 \value{
 variable containing resulting heatmap.

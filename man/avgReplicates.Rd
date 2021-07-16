@@ -10,7 +10,8 @@ avgReplicates(
   disease.samples,
   reference.samples,
   chop.length = 2,
-  null.ip.col = "Bead"
+  null.ip.col = "Bead",
+  split.by = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ avgReplicates(
 \item{chop.length}{number characters to remove from the end of each sample name to remove the replicate IDs <default: 2>}
 
 \item{null.ip.col}{option that indicates a regex to group all AG Bead columns <default: Bead >}
+
+\item{split.by}{insert regex to split sample strings by and keep the first element, which helps simplify complex sample names <default: NULL>}
 }
 \value{
 data frame with non-target columns averaged
