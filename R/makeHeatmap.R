@@ -22,6 +22,7 @@
 #' @param null.ip.col option that indicates a regex to group all AG Bead columns <default: Bead >
 #' @param transpose.heatmap option to transpose the heatmaps columns and rows <default: FALSE>
 #' @param custom.gene.labels option to change row labels to gene names only labeled once per gene block <default: TRUE>
+#' @param chop.length number characters to remove from the end of each sample name to remove the replicate IDs <default: 2>
 #' @param split.by insert regex to split sample strings by and keep the first element, which helps simplify complex sample names <default: NULL>
 #' @return variable containing resulting heatmap.
 #' @examples makeHeatmap(df,patient,target.samples,disease.samples,reference.samples)
@@ -35,7 +36,7 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
                         disease.annot = "COVID-19+",reference.annot = "REFERENCE",min.rpk = 0,
                         break.list = NULL, gene.order = c(),avg.non.target.columns = FALSE,disease.first = TRUE,
                         cell.height=5,cell.width=5, num.pos.controls = 1,null.ip.col = "Bead",transpose.heatmap=FALSE,
-                        custom.gene.labels=TRUE,split.by = NULL) {
+                        custom.gene.labels=TRUE,chop.length = 2,split.by = NULL) {
   # Set the margins for heatmaps
   par(mar=c(1,1,1,1))
 
@@ -87,12 +88,12 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
   disease.samples.orig   <- disease.samples
   reference.samples.orig <- reference.samples
   if (avg.non.target.columns == TRUE){
-    df <- avgReplicates(df,target.samples,disease.samples,reference.samples, null.ip.col = null.ip.col,split.by = split.by)
-    disease.samples   <- collapseReplicateColumnNames(disease.samples, null.ip.col=null.ip.col,split.by = split.by)
-    reference.samples <- collapseReplicateColumnNames(reference.samples, null.ip.col=null.ip.col,split.by = split.by)
+    df <- avgReplicates(df,target.samples,disease.samples,reference.samples, null.ip.col = null.ip.col,chop.length = chop.length,split.by = split.by)
+    disease.samples   <- collapseReplicateColumnNames(disease.samples, null.ip.col=null.ip.col,chop.length = chop.length,split.by = split.by)
+    reference.samples <- collapseReplicateColumnNames(reference.samples, null.ip.col=null.ip.col,chop.length = chop.length,split.by = split.by)
 
-    if(length(disease.samples.rem.order) > 0){disease.samples.rem.order   <- collapseReplicateColumnNames(disease.samples.rem.order,null.ip.col=null.ip.col)}
-    if (length(reference.samples.rem.order) > 0){reference.samples.rem.order <- collapseReplicateColumnNames(reference.samples.rem.order,null.ip.col=null.ip.col)}
+    if(length(disease.samples.rem.order) > 0){disease.samples.rem.order   <- collapseReplicateColumnNames(disease.samples.rem.order,null.ip.col=null.ip.col,chop.length = chop.length,split.by = split.by)}
+    if (length(reference.samples.rem.order) > 0){reference.samples.rem.order <- collapseReplicateColumnNames(reference.samples.rem.order,null.ip.col=null.ip.col,chop.length = chop.length,split.by = split.by)}
   }
 
 

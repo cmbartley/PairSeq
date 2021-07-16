@@ -26,6 +26,7 @@ makeHeatmap(
   null.ip.col = "Bead",
   transpose.heatmap = FALSE,
   custom.gene.labels = TRUE,
+  chop.length = 2,
   split.by = NULL
 )
 }
@@ -71,6 +72,8 @@ makeHeatmap(
 \item{transpose.heatmap}{option to transpose the heatmaps columns and rows <default: FALSE>}
 
 \item{custom.gene.labels}{option to change row labels to gene names only labeled once per gene block <default: TRUE>}
+
+\item{chop.length}{number characters to remove from the end of each sample name to remove the replicate IDs <default: 2>}
 
 \item{split.by}{insert regex to split sample strings by and keep the first element, which helps simplify complex sample names <default: NULL>}
 }
