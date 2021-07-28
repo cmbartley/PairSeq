@@ -310,8 +310,10 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
     if (length(reference.samples.rem.order)>0){col_gaps <- c(col_gaps,gap2)}
   }
 
-  gap3 <- length(names(df_fmt)) - num.pos.controls
-  col_gaps <- c(col_gaps,gap3)
+  if(!is.null(null.ip.col)){
+    gap3 <- length(names(df_fmt)) - num.pos.controls
+    col_gaps <- c(col_gaps,gap3)
+  }
 
   # Custom Row names
   cust_labels_row <- row.names(df_fmt)
