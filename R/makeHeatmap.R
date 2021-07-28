@@ -56,13 +56,21 @@ makeHeatmap <- function(df,patient,gene.col = "gene",peptide.id.col = "peptide_i
     for (i in 1:length(sample.vec)) {
       sample <- sample.vec[i]
       name  <- ""
-      if(grepl(null.ip.col,sample)){
-        name <- unlist(strsplit(sample,"_"))[1]
-      } else if (grepl("GFAP",sample)){
+      if (grepl("GFAP",sample)){
         name <- unlist(strsplit(sample,"_"))[1]
       } else{
-        name_comp <- unlist(strsplit(sample,"_"))
-        name <- paste(name_comp[2:(length(name_comp)-1)],collapse = "_")
+        if(is.null(null.ip.col)){
+          name_comp <- unlist(strsplit(sample,"_"))
+          name <- paste(name_comp[2:(length(name_comp)-1)],collapse = "_")
+        }else{
+          if(grepl(null.ip.col,sample)){
+            name <- unlist(strsplit(sample,"_"))[1]
+          } else{
+            name_comp <- unlist(strsplit(sample,"_"))
+            name <- paste(name_comp[2:(length(name_comp)-1)],collapse = "_")
+          }
+        }
+
       }
       name_vec <- c(name_vec,name)
     }
@@ -405,15 +413,24 @@ avgReplicates <- function(df,target.samples,disease.samples,reference.samples,ch
 collapseReplicateColumnNames <- function(col.name.vec,chop.length = 2,null.ip.col = "Bead",split.by = NULL) {
   for (i in 1:length(col.name.vec)) {
     sample               <- col.name.vec[i]
-    if (grepl(null.ip.col,sample)){
-      col.name.vec[i] <- tstrsplit(sample,"_")[[1]]
-    } else if (grepl("GFAP_",sample)){
+    if (grepl("GFAP_",sample)){
       col.name.vec[i] <- tstrsplit(sample,"_")[[1]]
     } else{
-      if(!is.null(split.by)){
-        sample <- tstrsplit(sample,split.by)[[1]]
+      if(is.null(null.ip.col)){
+        if(!is.null(split.by)){
+          sample <- tstrsplit(sample,split.by)[[1]]
+        }
+        col.name.vec[i] <- substr(sample,1,nchar(sample)-chop.length)
+      } else{
+        if (grepl(null.ip.col,sample)){
+          col.name.vec[i] <- tstrsplit(sample,"_")[[1]]
+        } else{
+          if(!is.null(split.by)){
+            sample <- tstrsplit(sample,split.by)[[1]]
+          }
+          col.name.vec[i] <- substr(sample,1,nchar(sample)-chop.length)
+        }
       }
-      col.name.vec[i] <- substr(sample,1,nchar(sample)-chop.length)
     }
 
   }
