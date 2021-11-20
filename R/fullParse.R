@@ -24,8 +24,9 @@ fullParse <- function(df,list_of_samples, MIN_RPK = 0,FC_THRESH1 = 10, FC_THRESH
                 samp_z  <- paste0(samp,"_Z")
 
                 #create sample-specific dataframe of minimum rpK >= 2,  minimum FC >= 10 and minium Z-score threshold
-                df_2rpK      <- df[df[,samp] > 0,]
-                df_2rpK      <- df_2rpK[df_2rpK[,samp] >= MIN_RPK,]
+                df_2rpK      <- df[df[,samp] >= MIN_RPK,]
+                df_2rpK[,samp_fc][is.na(df_2rpK[,samp_fc])] <- 0 # For FC convert NAs to 0
+
                 if(ZSCORE_THRESH1 != 0){
                   df_2rpK      <- df_2rpK[df_2rpK[,samp_z] >= ZSCORE_THRESH1,]
                 }
