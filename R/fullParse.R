@@ -11,8 +11,6 @@
 #' @param ZSCORE_THRESH2 If calculated, applies additional Z-score threshold similar to the FC_THRESH2 arguement <default: 0>
 #' @return returns a subset of phage results with peptides that pass all filters.
 #' @examples fullParse(df,list_of_samples, MIN_RPK = 2,FC_THRESH1 = 10, FC_THRESH2 = 100, SUM_RPK_THRESH = 50)
-#' @import seqinr
-#' @import data.table
 #' @export
 
 fullParse <- function(df,list_of_samples, MIN_RPK = 0,FC_THRESH1 = 10, FC_THRESH2 = 100, SUM_RPK_THRESH = 50, ZSCORE_THRESH1 = 0, ZSCORE_THRESH2 = 0){
