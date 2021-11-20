@@ -25,20 +25,20 @@ fullParse <- function(df,list_of_samples, MIN_RPK = 0,FC_THRESH1 = 10, FC_THRESH
 
                 #create sample-specific dataframe of minimum rpK >= 2,  minimum FC >= 10 and minium Z-score threshold
                 df_2rpK      <- df[df[,samp] > 0,]
-                df_2rpK      <- subset(df_2rpK, df_2rpK[,samp] >= MIN_RPK)
+                df_2rpK      <- df_2rpK[df_2rpK[,samp] >= MIN_RPK,]
                 if(ZSCORE_THRESH1 != 0){
-                  df_2rpk      <- subset(df_2rpK, df_2rpK[,samp_z] >= ZSCORE_THRESH1)
+                  df_2rpK      <- df_2rpK[df_2rpK[,samp_z] >= ZSCORE_THRESH1,]
                 }
-                df_2rpK_FC10 <- subset(df_2rpK, df_2rpK[,samp_fc] >= FC_THRESH1)
+                df_2rpK_FC10 <- df_2rpK[df_2rpK[,samp_fc] >= FC_THRESH1,]
 
                 #create separate sample-specific dataframe of minimum rpK >= 2 and minimum FC >= 100
-                df_2rpK_FC10_FC100 <- subset(df_2rpK_FC10, df_2rpK_FC10[,samp_fc] >= FC_THRESH2)
+                df_2rpK_FC10_FC100 <- df_2rpK_FC10[df_2rpK_FC10[,samp_fc] >= FC_THRESH2,]
                 if(ZSCORE_THRESH2 != 0){
-                  ddf_2rpK_FC10_FC100 <- subset(df_2rpK_FC10_FC100, df_2rpK_FC10_FC100[,samp_z] >= ZSCORE_THRESH2)
+                  df_2rpK_FC10_FC100 <- df_2rpK_FC10_FC100[df_2rpK_FC10_FC100[,samp_z] >= ZSCORE_THRESH2,]
                 }
 
                 #expand FC100 dataframe to include FC >= 10 phage that mapt to same genes as FC >= 100 phage (goal to identifying overlapping, enriched phage)
-                df_extended <- df_2rpK_FC10[which(df_2rpK_FC10$gene %in% df_2rpK_FC10_FC100$gene),]
+                df_extended <- df_2rpK_FC10[df_2rpK_FC10$gene %in% unique(df_2rpK_FC10_FC100$gene),]
 
                 #create unique list of genes in the expanded df
                 genes <- unique(df_extended$gene)
